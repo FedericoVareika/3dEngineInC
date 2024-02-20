@@ -1,8 +1,19 @@
+CFLAGS = -Wall -std=c99 -I/opt/homebrew/include -L/opt/homebrew/lib
+LIBS = -lSDL2 -lSDL2_ttf
+
+PROGRAM_NAME = engine
+
+FILES = ./src/*.c ./src/visuals/*.c ./src/math/*.c ./src/rendering/*.c
+
 build: 
-	gcc -Wall -std=c99 -I/opt/homebrew/include -L/opt/homebrew/lib -o raster ./src/*.c -lSDL2 -lSDL2_ttf
+	gcc $(CFLAGS) -o $(PROGRAM_NAME) $(FILES) $(LIBS) 
 
 run:
-	./raster
+	./$(PROGRAM_NAME)
 
 clean: 
-	rm raster
+	rm $(PROGRAM_NAME)
+
+debug: 
+	gcc $(CFLAGS) -g $(FILES) $(LIBS) 
+	lldb a.out

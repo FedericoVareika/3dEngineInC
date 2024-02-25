@@ -2,10 +2,17 @@
 #define VEC3_H
 
 #define MESH_SIZE
-#define PI 3.14159265359
+#define PI 3.14159265359f
+
+typedef struct vec2_t {
+    float x;
+    float y;
+} vec2_t;
 
 typedef struct vec3_t {
-    float x, y, z;
+    float x;
+    float y;
+    float z;
 } vec3_t;
 
 typedef struct vec4_t {
@@ -14,6 +21,8 @@ typedef struct vec4_t {
     float z;
     float w;
 } vec4_t;
+
+typedef vec4_t quaternion_t;
 
 typedef struct matrix_t {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
@@ -36,20 +45,14 @@ vec4_t vec3_to_vec4(const vec3_t *v3);
 
 float lerp(float start, float end, float t);
 
+float vec4_dot(const vec4_t *A, const vec4_t *B);
+float distance_to_plane(const vec4_t *plane, const vec3_t *point);
+vec3_t intersection_plane_segment(const vec4_t *plane,
+                                  const vec3_t *A,
+                                  const vec3_t *B);
+
 // ---------------------------------------------- //
 // ---------------------------------------------- //
 // ---------------------------------------------- //
-
-// typedef struct triangle_t {
-//     vec3_t p[3];
-// } triangle_t;
-
-typedef struct mesh_t {
-    int vertex_count;
-    int triangle_count;
-
-    // make this into an array of pointers to avoid vertex copying
-    vec3_t *vertices;
-} mesh_t;
 
 #endif // !VEC3_H

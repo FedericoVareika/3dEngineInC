@@ -17,36 +17,69 @@ void create_engine(engine_t *engine) {
     engine->camera->traslation_speed = (vec3_t){0, 0, 0};
     engine->camera->rotation_speed = (vec3_t){0, 0, 0};
 
-    engine->far = 100;
-    engine->near = 0.1;
+    engine->far = -1000;
+    engine->near = -0.1;
     engine->fovy = 90.f / 180.f * PI;
     engine->aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 
+    // frustum coords
+    engine->top = engine->near * tanf(-engine->fovy / 2);
+    engine->right = engine->top * engine->aspect_ratio;
+    engine->bottom = -engine->top;
+    engine->left = -engine->right;
+
+    printf("top: %f, right: %f, bottom: %f, left: %f\n",
+           engine->top,
+           engine->right,
+           engine->bottom,
+           engine->left);
+
+    // near
+    engine->clipping_planes[0] = (vec4_t){0, 0, -1, engine->near};
+    // far
+    engine->clipping_planes[1] = (vec4_t){0, 0, 1, -engine->far};
+    // top
+    engine->clipping_planes[2] = (vec4_t){0, engine->near, engine->bottom, 0};
+    // bottom
+    engine->clipping_planes[3] = (vec4_t){0, -engine->near, engine->bottom, 0};
+    // left
+    engine->clipping_planes[4] = (vec4_t){-engine->near, 0, -engine->right, 0};
+    // right
+    engine->clipping_planes[5] = (vec4_t){engine->near, 0, -engine->right, 0};
+
+    // Engine meshes
     engine->mesh_count = 0;
-    engine->meshes = malloc(sizeof(mesh_t) * MAX_MESHES);
+    engine->meshes = malloc(sizeof(mesh_t*) * MAX_MESHES);
     if (!engine->meshes) {
         fprintf(stderr, "Mesh malloc failed \n");
         return;
     }
 
+    engine->directional_light = (vec3_t){0, 1, 1};
+    engine->directional_light = vec3_norm(&engine->directional_light);
+
     engine->projection_transform = generate_projection_transform(
-        engine->fovy, engine->aspect_ratio, engine->near, engine->far);
+        engine->fovy, engine->aspect_ratio, -engine->near, -engine->far);
     engine->viewport_transform =
         generate_viewport_transform(SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 void destroy_engine(engine_t *engine) {
     for (int i = 0; i < engine->mesh_count; i++) {
-        free(engine->meshes[i].vertices);
+        free(engine->meshes[i]->vertices);
+        // free(engine->meshes[i].tex_coords);
+        // free(engine->meshes[i].normals);
+
+        free(engine->meshes[i]->indices);
     }
     free(engine->meshes);
     free(engine->camera);
 }
 
 void destroy_mesh(engine_t *engine, const int pos) {
-    free(engine->meshes[pos].vertices);
+    free(engine->meshes[pos]->vertices);
     for (int i = pos + 1; i < engine->mesh_count; i++) {
-        engine->meshes[i - 1].vertices = engine->meshes[i].vertices;
+        engine->meshes[i - 1]->vertices = engine->meshes[i]->vertices;
     }
     engine->mesh_count--;
 }
@@ -96,6 +129,7 @@ void rotate_camera(engine_t *engine, float delta_time) {
             &u, delta_time * camera->rotation_speed.x);
         matrix_transformation(&temp_v4, &R_u);
     }
+
     const matrix_t R_w =
         rotation_matrix_from_axis(&w, delta_time * camera->rotation_speed.z);
     matrix_transformation(&temp_v4, &R_w);
@@ -105,8 +139,4 @@ void rotate_camera(engine_t *engine, float delta_time) {
     matrix_transformation(&temp_v4, &R_up);
 
     camera->direction = vec4_to_vec3(&temp_v4);
-    // printf("Direction: (%f, %f, %f)\n",
-    //        camera->direction.x,
-    //        camera->direction.y,
-    //        camera->direction.z);
 }

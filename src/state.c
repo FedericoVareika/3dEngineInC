@@ -327,26 +327,6 @@ void update_gui(state_t *state, const char *gui_text) {
 }
 
 void render_gui(state_t *state) {
-    // SDL_Color white = {0xFF, 0xFF, 0xFF, 0xFF};
-    // SDL_Surface *text_surface =
-    //     TTF_RenderText_Solid(state->ttf_font, "Hello", white);
-    // SDL_Texture *text_texture =
-    //     SDL_CreateTextureFromSurface(state->renderer, text_surface);
-    //
-    // SDL_SetRenderTarget(state->renderer, state->gui_texture);
-    // SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 0);
-    // SDL_RenderClear(state->renderer);
-    //
-    // // printf("w: %i, h: %i\n", text_surface->w, text_surface->h);
-    // SDL_Rect dest_rect = {
-    //     .x = 10, .y = 10, .w = text_surface->w, .h = text_surface->h};
-    // SDL_RenderCopy(state->renderer, text_texture, NULL, &dest_rect);
-    // SDL_DestroyTexture(text_texture);
-    // SDL_FreeSurface(text_surface);
-    //
-    // SDL_SetRenderTarget(state->renderer, NULL);
-    // SDL_RenderCopy(state->renderer, state->gui_texture, NULL, NULL);
-
     SDL_RenderCopy(state->renderer, state->textures.gui_texture, NULL, NULL);
 }
 

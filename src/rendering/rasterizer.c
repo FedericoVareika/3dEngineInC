@@ -1,86 +1,121 @@
 #include "rasterizer.h"
 #include <math.h>
 
-static bool is_top_left(vec3_t *start, vec3_t *end) {
+static bool is_top_left(const vec3_t *start, const vec3_t *end) {
     vec3_t edge = {end->x - start->x, end->y - start->y};
     return (edge.y == 0 && edge.x > 0) || edge.y > 0;
 }
-// --------------------------------------------------------------------------//
 
-static vec3_t barycentric_coords(
-    float x, float y, const vec3_t *A, const vec3_t *B, const vec3_t *C) {
-
-    // Calculate all the parallelogram areas for two points and a
-    float bcp_area = (x - B->x) * (C->y - B->y) - (y - B->y) * (C->x - B->x);
-    float cap_area = (x - C->x) * (A->y - C->y) - (y - C->y) * (A->x - C->x);
-    float abp_area = (x - A->x) * (B->y - A->y) - (y - A->y) * (B->x - A->x);
-
-    float area = abp_area + bcp_area + cap_area;
-    return (vec3_t){
-        .x = bcp_area / area,
-        .y = cap_area / area,
-        .z = abp_area / area,
-    };
+static float edge_cross(const vec3_t *A, const vec3_t *B, const vec3_t *C) {
+    return (C->x - A->x) * (B->y - A->y) - (C->y - A->y) * (B->x - A->x);
 }
 
-static void
-fill_triangle(uint32_t *frame_buffer, float *z_buffer, vec3_t *vertices) {
-    vec3_t A = vertices[0];
-    vec3_t B = vertices[1];
-    vec3_t C = vertices[2];
+// --------------------------------------------------------------------------//
 
-    int x_min = floor(fmin(A.x, fmin(B.x, C.x)));
-    int x_max = ceil(fmax(A.x, fmax(B.x, C.x)));
+static void fill_triangle(uint32_t *frame_buffer,
+                          float *z_buffer,
+                          const vec3_t *A,
+                          const vec3_t *B,
+                          const vec3_t *C,
+                          const vec3_t *face_normal,
+                          const vec3_t *directional_light) {
+    float x_min = floor(fmin(A->x, fmin(B->x, C->x)));
+    float x_max = ceil(fmax(A->x, fmax(B->x, C->x)));
 
-    int y_min = floor(fmin(A.y, fmin(B.y, C.y)));
-    int y_max = ceil(fmax(A.y, fmax(B.y, C.y)));
+    float y_min = floor(fmin(A->y, fmin(B->y, C->y)));
+    float y_max = ceil(fmax(A->y, fmax(B->y, C->y)));
 
-    float biasA = is_top_left(&B, &C) ? 0 : -0.0001f;
-    float biasB = is_top_left(&B, &C) ? 0 : -0.0001f;
-    float biasC = is_top_left(&B, &C) ? 0 : -0.0001f;
+    float biasA = is_top_left(B, C) ? 0 : -0.0001f;
+    float biasB = is_top_left(C, A) ? 0 : -0.0001f;
+    float biasC = is_top_left(A, B) ? 0 : -0.0001f;
 
     // Area of parallelogram
-    float area = (C.x - A.x) * (B.y - A.y) - (C.y - A.y) * (B.x - A.x);
+    float area = edge_cross(A, B, C);
+
+    vec3_t P = {x_min, y_min, 0};
+
+    float wA_row = edge_cross(B, C, &P) + biasA;
+    float wB_row = edge_cross(C, A, &P) + biasB;
+    float wC_row = edge_cross(A, B, &P) + biasC;
+
+    float delta_wA_col = C->y - B->y;
+    float delta_wB_col = A->y - C->y;
+    float delta_wC_col = B->y - A->y;
+
+    float delta_wA_row = B->x - C->x;
+    float delta_wB_row = C->x - A->x;
+    float delta_wC_row = A->x - B->x;
 
     for (int y = y_min; y <= y_max; y++) {
+        float wA = wA_row;
+        float wB = wB_row;
+        float wC = wC_row;
+        // printf("wa: %f, wb: %f, wc: %f\n", wA, wB, wC);
+
+        bool has_been_inside = false;
+
         for (int x = x_min; x <= x_max; x++) {
-            vec3_t b_coords = barycentric_coords(x, y, &A, &B, &C);
+            vec3_t b_coords = {
+                (wA - biasA) / area, (wB - biasB) / area, (wC - biasC) / area};
 
-            bool inside_triangle = b_coords.x * area + biasA >= 0 &&
-                                   b_coords.y * area + biasB >= 0 &&
-                                   b_coords.z * area + biasC >= 0;
+            bool inside_triangle = wA >= 0 && wB >= 0 && wC >= 0;
 
-            float z = b_coords.x * A.z + b_coords.y * B.z + b_coords.z * C.z;
+            float z = b_coords.x * A->z + b_coords.y * B->z + b_coords.z * C->z;
             bool has_pixel_priority = pixel_priority(z_buffer, x, y, z);
             if (inside_triangle && has_pixel_priority) {
+                has_been_inside = true;
+                float lum = vec3_dot(face_normal, directional_light);
+                lum = lum / 2 + 0.5;
 
-                uint32_t r = (uint32_t)(0xFF * b_coords.x) << 16;
-                uint32_t g = (uint32_t)(0xFF * b_coords.y) << 8;
-                uint32_t b = (uint32_t)(0xFF * b_coords.z) << 0;
-                uint32_t color = 0xFF000000 + r + g + b;
+                uint32_t a = (uint32_t)(0xFF) << 24;
+                uint32_t r = (uint32_t)(0xFF * lum) << 16; // * b_coords.x
+                uint32_t g = (uint32_t)(0xFF * lum) << 8;  // * b_coords.y
+                uint32_t b = (uint32_t)(0xFF * lum) << 0;  // * b_coords.z
+                uint32_t color = a + r + g + b;
+                /* color = 0xFFCCCCCC; */
 
                 frame_buffer[SCREEN_WIDTH * y + x] = color;
                 z_buffer[SCREEN_WIDTH * y + x] = z;
+            } else if (has_been_inside && !inside_triangle) {
+                x = x_max + 1;
             }
+
+            wA += delta_wA_col;
+            wB += delta_wB_col;
+            wC += delta_wC_col;
         }
+        wA_row += delta_wA_row;
+        wB_row += delta_wB_row;
+        wC_row += delta_wC_row;
     }
 }
 
 // TODO: Change to bresenham's if too slow
-void draw_line(bool *wireframe_buffer, vec3_t *A, vec3_t *B) {
+void draw_line(bool *wireframe_buffer, const vec3_t *A, const vec3_t *B) {
     float dx = B->x - A->x;
     float dy = B->y - A->y;
 
     float step = fmax(fabs(dx), fabs(dy));
 
+    if (step == 0) {
+        return;
+    }
+
     float x_step = dx / step;
     float y_step = dy / step;
+
+    if ((x_step == 0 && y_step == 0) || isnan(x_step) || isnan(y_step)) {
+        return;
+    }
+
+    // printf("x_step: %f, y_step: %f\n", x_step, y_step);
 
     float x = A->x;
     float y = A->y;
 
     bool after_x = false;
     bool after_y = false;
+
     while (!after_x && !after_y) {
         int y_int = (y > (floor(y) + 0.5f)) ? ceil(y) : floor(y);
         int x_int = (x > (floor(x) + 0.5f)) ? ceil(x) : floor(x);
@@ -95,22 +130,26 @@ void draw_line(bool *wireframe_buffer, vec3_t *A, vec3_t *B) {
     }
 }
 
-void triangle_wireframe(bool *wireframe_buffer, vec3_t *vertices) {
-    vec3_t A = vertices[0];
-    vec3_t B = vertices[1];
-    vec3_t C = vertices[2];
-
-    draw_line(wireframe_buffer, &A, &B);
-    draw_line(wireframe_buffer, &B, &C);
-    draw_line(wireframe_buffer, &C, &A);
+void triangle_wireframe(bool *wireframe_buffer,
+                        const vec3_t *A,
+                        const vec3_t *B,
+                        const vec3_t *C) {
+    draw_line(wireframe_buffer, A, B);
+    draw_line(wireframe_buffer, B, C);
+    draw_line(wireframe_buffer, C, A);
 }
 
-void draw_mesh(state_t *state, const mesh_t *mesh) {
-    for (int i = 0; i < mesh->triangle_count; i++) {
-        fill_triangle(state->buffers.frame_buffer,
-                      state->buffers.z_buffer,
-                      &mesh->vertices[i * 3]);
-        triangle_wireframe(state->buffers.wireframe_buffer,
-                           &mesh->vertices[i * 3]);
-    }
+void draw_triangle(state_t *state,
+                   const vec3_t A,
+                   const vec3_t B,
+                   const vec3_t C,
+                   const vec3_t face_normal) {
+    fill_triangle(state->buffers.frame_buffer,
+                  state->buffers.z_buffer,
+                  &A,
+                  &B,
+                  &C,
+                  &face_normal,
+                  &state->engine->directional_light);
+    triangle_wireframe(state->buffers.wireframe_buffer, &A, &B, &C);
 }

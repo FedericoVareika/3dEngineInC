@@ -9,155 +9,141 @@
 void make_unit_cube(engine_t *engine);
 void make_prism(
     engine_t *engine, float x, float y, float z, float w, float h, float d);
+void make_triangle(engine_t *engine);
 
 void make_unit_cube(engine_t *engine) {
+    int vertex_count = 8;
+    int triangle_count = 12;
+    int index_count = triangle_count * 3;
+
     int pos = engine->mesh_count;
-    engine->meshes[pos].vertices = malloc(sizeof(vec3_t) * 36);
-    engine->meshes[pos].vertex_count = 36; // find a way to make it 8
-    engine->meshes[pos].triangle_count = 12;
-    if (!engine->meshes[pos].vertices) {
+    engine->meshes[pos]->vertices = malloc(sizeof(vec3_t) * vertex_count);
+    if (!engine->meshes[pos]->vertices) {
         fprintf(stderr, "Vertices malloc failed");
         return;
     }
 
-    vec3_t *vertices = engine->meshes[pos].vertices;
+    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
+    if (!engine->meshes[pos]->indices) {
+        fprintf(stderr, "Indices malloc failed");
+        return;
+    }
 
-    // South wall
-    vertices[0] = (vec3_t){-0.5, -0.5, -4.5}; // left bottom near
-    vertices[1] = (vec3_t){-0.5, 0.5, -4.5};  // left top near
-    vertices[2] = (vec3_t){0.5, 0.5, -4.5};   // right top near
+    engine->meshes[pos]->vertex_count = vertex_count;
+    engine->meshes[pos]->triangle_count = triangle_count;
 
-    vertices[3] = (vec3_t){-0.5, -0.5, -4.5}; // left bottom near
-    vertices[4] = (vec3_t){0.5, 0.5, -4.5};   // right top near
-    vertices[5] = (vec3_t){0.5, -0.5, -4.5};  // right bottom near
+    vec3_t *vertices = engine->meshes[pos]->vertices;
 
-    // North wall
-    vertices[6] = (vec3_t){-0.5, -0.5, -5.5}; // left bottom far
-    vertices[7] = (vec3_t){0.5, 0.5, -5.5};   // right top far
-    vertices[8] = (vec3_t){-0.5, 0.5, -5.5};  // left top far
+    // near
+    vertices[0] = (vec3_t){0, 0, 0}; // left bottom near
+    vertices[1] = (vec3_t){0, 1, 0}; // left top near
+    vertices[2] = (vec3_t){1, 1, 0}; // right top near
+    vertices[3] = (vec3_t){1, 0, 0}; // right bottom near
 
-    vertices[9] = (vec3_t){-0.5, -0.5, -5.5}; // left bottom far
-    vertices[10] = (vec3_t){0.5, -0.5, -5.5}; // right bottom far
-    vertices[11] = (vec3_t){0.5, 0.5, -5.5};  // right top far
+    // far
+    vertices[4] = (vec3_t){0, 0, -1}; // left bottom far
+    vertices[5] = (vec3_t){0, 1, -1}; // left top far
+    vertices[6] = (vec3_t){1, 1, -1}; // right top far
+    vertices[7] = (vec3_t){1, 0, -1}; // right bottom far
 
-    // Down wall
-    vertices[12] = (vec3_t){-0.5, -0.5, -4.5}; // left bottom near
-    vertices[13] = (vec3_t){0.5, -0.5, -4.5};  // right bottom near
-    vertices[14] = (vec3_t){0.5, -0.5, -5.5};  // right bottom far
+    unsigned short *indices = (unsigned short[36]){
+        0, 1, 2, 0, 2, 3, // south wall
+        7, 6, 5, 4, 7, 5, // north wall
+        4, 0, 3, 4, 3, 7, // down wall
+        1, 5, 6, 1, 6, 2, // top wall
+        4, 5, 1, 4, 1, 0, // left wall
+        3, 2, 6, 3, 6, 7, // right wall
+    };
 
-    vertices[15] = (vec3_t){-0.5, -0.5, -4.5}; // left bottom near
-    vertices[16] = (vec3_t){0.5, -0.5, -5.5};  // right bottom far
-    vertices[17] = (vec3_t){-0.5, -0.5, -5.5}; // left bottom far
-
-    // Top wall
-    vertices[18] = (vec3_t){-0.5, 0.5, -4.5}; // left top near
-    vertices[19] = (vec3_t){0.5, 0.5, -5.5};  // right top far
-    vertices[20] = (vec3_t){0.5, 0.5, -4.5};  // right top near
-
-    vertices[21] = (vec3_t){-0.5, 0.5, -4.5}; // left top near
-    vertices[22] = (vec3_t){-0.5, 0.5, -5.5}; // left top far
-    vertices[23] = (vec3_t){0.5, 0.5, -5.5};  // right top far
-
-    // Left wall
-    vertices[24] = (vec3_t){-0.5, -0.5, -5.5}; // left bottom far
-    vertices[25] = (vec3_t){-0.5, 0.5, -4.5};  // left top near
-    vertices[26] = (vec3_t){-0.5, -0.5, -4.5}; // left bottom near
-
-    vertices[27] = (vec3_t){-0.5, -0.5, -5.5}; // left bottom far
-    vertices[28] = (vec3_t){-0.5, 0.5, -5.5};  // left top far
-    vertices[29] = (vec3_t){-0.5, 0.5, -4.5};  // left top near
-
-    // Right wall
-    vertices[30] = (vec3_t){0.5, -0.5, -4.5}; // right bottom near
-    vertices[31] = (vec3_t){0.5, 0.5, -4.5};  // right top near
-    vertices[32] = (vec3_t){0.5, 0.5, -5.5};  // right top far
-
-    vertices[33] = (vec3_t){0.5, -0.5, -4.5}; // right bottom near
-    vertices[34] = (vec3_t){0.5, 0.5, -5.5};  // right top far
-    vertices[35] = (vec3_t){0.5, -0.5, -5.5}; // right bottom far
-
+    for (int i = 0; i < index_count; i++) {
+        engine->meshes[pos]->indices[i] = indices[i];
+    }
     engine->mesh_count++;
 }
 
 void make_prism(
     engine_t *engine, float x, float y, float z, float w, float h, float d) {
+    int vertex_count = 8;
+    int triangle_count = 12;
+    int index_count = triangle_count * 3;
+
     int pos = engine->mesh_count;
-    engine->meshes[pos].vertices = malloc(sizeof(vec3_t) * 36);
-    engine->meshes[pos].vertex_count = 36; // find a way to make it 8
-    engine->meshes[pos].triangle_count = 12;
-    if (!engine->meshes[pos].vertices) {
+    engine->meshes[pos]->vertices = malloc(sizeof(vec3_t) * vertex_count);
+    if (!engine->meshes[pos]->vertices) {
         fprintf(stderr, "Vertices malloc failed");
         return;
     }
 
-    vec3_t *vertices = engine->meshes[pos].vertices;
+    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
+    if (!engine->meshes[pos]->indices) {
+        fprintf(stderr, "Indices malloc failed");
+        return;
+    }
+
+    engine->meshes[pos]->vertex_count = vertex_count;
+    engine->meshes[pos]->triangle_count = triangle_count;
+
+    vec3_t *vertices = engine->meshes[pos]->vertices;
 
     // near
-    vec3_t v0 = {x, y, z};         // left bottom near
-    vec3_t v1 = {x, y + h, z};     // left top near
-    vec3_t v2 = {x + w, y + h, z}; // right top near
-    vec3_t v3 = {x + w, y, z};     // right bottom near
+    vertices[0] = (vec3_t){x, y, z};         // left bottom near
+    vertices[1] = (vec3_t){x, y + h, z};     // left top near
+    vertices[2] = (vec3_t){x + w, y + h, z}; // right top near
+    vertices[3] = (vec3_t){x + w, y, z};     // right bottom near
 
     // far
-    vec3_t v4 = {x, y, z - d};         // left bottom far
-    vec3_t v5 = {x, y + h, z - d};     // left top far
-    vec3_t v6 = {x + w, y + h, z - d}; // right top far
-    vec3_t v7 = {x + w, y, z - d};     // right bottom far
+    vertices[4] = (vec3_t){x, y, z - d};         // left bottom far
+    vertices[5] = (vec3_t){x, y + h, z - d};     // left top far
+    vertices[6] = (vec3_t){x + w, y + h, z - d}; // right top far
+    vertices[7] = (vec3_t){x + w, y, z - d};     // right bottom far
 
-    // South wall
-    vertices[0] = v0; // left bottom near
-    vertices[1] = v1; // left top near
-    vertices[2] = v2; // right top near
+    // unsigned short *indices = engine->meshes[pos].indices;
 
-    vertices[3] = v0; // left bottom near
-    vertices[4] = v2; // right top near
-    vertices[5] = v3; // right bottom near
+    unsigned short *indices = (unsigned short[36]){
+        0, 1, 2, 0, 2, 3, // south wall
+        7, 6, 5, 4, 7, 5, // north wall
+        4, 0, 3, 4, 3, 7, // down wall
+        1, 5, 6, 1, 6, 2, // top wall
+        4, 5, 1, 4, 1, 0, // left wall
+        3, 2, 6, 3, 6, 7, // right wall
+    };
 
-    // North wall
-    vertices[6] = v4; // left bottom far
-    vertices[7] = v6; // right top far
-    vertices[8] = v5; // left top far
+    for (int i = 0; i < index_count; i++) {
+        engine->meshes[pos]->indices[i] = indices[i];
+    }
 
-    vertices[9] = v4;  // left bottom far
-    vertices[10] = v7; // right bottom far
-    vertices[11] = v6; // right top far
+    engine->mesh_count++;
+}
 
-    // Down wall
-    vertices[12] = v0; // left bottom near
-    vertices[13] = v3; // right bottom near
-    vertices[14] = v7; // right bottom far
+void make_triangle(engine_t *engine) {
+    int vertex_count = 3;
+    int triangle_count = 1;
 
-    vertices[15] = v0; // left bottom near
-    vertices[16] = v7; // right bottom far
-    vertices[17] = v4; // left bottom far
+    int index_count = triangle_count * 3;
 
-    // Top wall
-    vertices[18] = v1; // left top near
-    vertices[19] = v6; // right top far
-    vertices[20] = v2; // right top near
+    int pos = engine->mesh_count;
+    engine->meshes[pos]->vertices = malloc(sizeof(vec3_t) * vertex_count);
+    if (!engine->meshes[pos]->vertices) {
+        fprintf(stderr, "Vertices malloc failed");
+        return;
+    }
 
-    vertices[21] = v1; // left top near
-    vertices[22] = v5; // left top far
-    vertices[23] = v6; // right top far
+    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
+    if (!engine->meshes[pos]->indices) {
+        fprintf(stderr, "Indices malloc failed");
+        return;
+    }
 
-    // Left wall
-    vertices[24] = v4; // left bottom far
-    vertices[25] = v1; // left top near
-    vertices[26] = v0; // left bottom near
+    engine->meshes[pos]->vertex_count = vertex_count;
+    engine->meshes[pos]->triangle_count = triangle_count;
 
-    vertices[27] = v4; // left bottom far
-    vertices[28] = v5; // left top far
-    vertices[29] = v1; // left top near
+    vec3_t *vertices = engine->meshes[pos]->vertices;
 
-    // Right wall
-    vertices[30] = v3; // right bottom near
-    vertices[31] = v2; // right top near
-    vertices[32] = v6; // right top far
+    vertices[0] = (vec3_t){0, 0, 0}; // left bottom near
+    vertices[1] = (vec3_t){0, 1, 0}; // left top near
+    vertices[2] = (vec3_t){1, 1, 0}; // right top near
 
-    vertices[33] = v3; // right bottom near
-    vertices[34] = v6; // right top far
-    vertices[35] = v7; // right bottom far
-
+    engine->meshes[pos]->indices = (unsigned short[3]){0, 1, 2};
     engine->mesh_count++;
 }
 

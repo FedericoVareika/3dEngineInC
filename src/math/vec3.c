@@ -1,5 +1,6 @@
 #include "vec3.h"
 #include <math.h>
+#include <stdio.h>
 
 vec3_t vec3_sub(const vec3_t *a, const vec3_t *b) {
     // return (vec3_t){a->x - b->x, a->y - b->y, a->z - b->z, a->color};
@@ -70,6 +71,42 @@ vec4_t vec3_to_vec4(const vec3_t *v3) {
     };
 }
 
+float vec4_dot(const vec4_t *A, const vec4_t *B) {
+    return A->x * B->x + A->y * B->y + A->z * B->z + A->w * B->w;
+}
+
 float lerp(float start, float end, float t) {
     return start * (1.0f - t) + end * t;
+}
+
+float distance_to_plane(const vec4_t *plane, const vec3_t *point) {
+    // Plane = (N_x, N_y, N_z, d), N being the normal to the plane and d the
+    // distance to (0, 0, 0)
+    // This is the parametric equation of a plane or:
+    // A.x + B.y + C.z = d --- where (A, B, C) = N
+    vec4_t point_4 = vec3_to_vec4(point);
+    return vec4_dot(plane, &point_4);
+}
+
+vec3_t intersection_plane_segment(const vec4_t *plane,
+                                  const vec3_t *A,
+                                  const vec3_t *B) {
+    // Plane = (N_x, N_y, N_z, d), N being the normal to the plane and d the
+    // distance to (0, 0, 0)
+    // This is the parametric equation of a plane or:
+    // A.x + B.y + C.z = d --- where (A, B, C) = N
+    // (N.P) = d
+
+    // P_intersection = A + t(A - B)  --- Parametric equation of the line AB
+    // t = (d - (N.A)) / (N.(B-A))   --- Found with both equations
+
+    vec3_t N = {plane->x, plane->y, plane->z};
+    float d = plane->w;
+
+    vec3_t AB = vec3_sub(B, A);
+
+    float t = (d - vec3_dot(&N, A)) / (vec3_dot(&N, &AB));
+    vec3_t tAB = vec3_mul(&AB, t);
+
+    return vec3_add(A, &tAB);
 }

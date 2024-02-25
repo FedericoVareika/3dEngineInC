@@ -50,9 +50,9 @@ generate_projection_transform(float fovy, float aspect, float near, float far) {
     matrix_t M_proj = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     M_proj.m0 = 1 / (aspect * tan(fovy * 0.5));
     M_proj.m5 = 1 / (tan(fovy * 0.5));
-    M_proj.m10 = -(far + near) / (far - near);
-    M_proj.m11 = -1;
-    M_proj.m14 = (-2 * far * near) / (far - near);
+    M_proj.m10 = -(far + near) / (far - near);     // changed
+    M_proj.m11 = -1;                               // changed
+    M_proj.m14 = -(2 * far * near) / (far - near); // changed
 
     /* ┌                                                                    ┐
      * | 1/(aspect*tan(fovy/2))        0               0            0       |
@@ -68,8 +68,8 @@ generate_projection_transform(float fovy, float aspect, float near, float far) {
 // canonical view volume (ndc) --> viewport
 matrix_t generate_viewport_transform(float width, float height) {
     matrix_t M_vp = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    M_vp.m0 = width / 2;
-    M_vp.m12 = (width) / 2;
+    M_vp.m0 = (width-1) / 2;
+    M_vp.m12 = (width-1) / 2;
     M_vp.m5 = height / 2;
     M_vp.m13 = (height) / 2;
     M_vp.m10 = 1;

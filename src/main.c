@@ -1,11 +1,12 @@
 #include <stdio.h>
 
 #include "engine.h"
+#include "loading/obj_loading.h"
 #include "state.h"
 
 #include "./math/vec3.h"
 
-#include "./visuals/shapes.h"
+/* #include "./visuals/shapes.h" */
 
 #include "./rendering/buffer_drawing.h"
 
@@ -50,9 +51,6 @@ char *get_gui_text(state_t *state) {
     // MAKE GUI TEXT
     char *gui_text;
     asprintf(&gui_text, "%s\n%s", fps_text, c_dir_text);
-    // char *gui_text = malloc(strlen(fps_text) + strlen(c_dir_text) + 1);
-    // strcpy(gui_text, fps_text);
-    // strcat(gui_text, c_dir_text);
 
     free(fps_text);
     free(c_dir_text);
@@ -65,18 +63,15 @@ int main(void) {
         return 1;
     }
 
-    make_unit_cube(state->engine);
-    for (int i = 0; i < state->engine->meshes[0].triangle_count * 3; i++) {
-        state->engine->meshes[0].vertices[i].y -= 0;
-        state->engine->meshes[0].vertices[i].x -= 1;
-    }
-    make_unit_cube(state->engine);
-    for (int i = 0; i < state->engine->meshes[1].triangle_count * 3; i++) {
-        state->engine->meshes[1].vertices[i].x += 1;
-        state->engine->meshes[1].vertices[i].y += 1;
+    mesh_t *mesh = malloc(sizeof(mesh_t));
+    bool loaded = load_mesh("./assets/objects/mountains.obj", mesh);
+    if (!loaded) 
+        printf("error loading\n");
+    else {
+        state->engine->meshes[state->engine->mesh_count] = mesh;
+        state->engine->mesh_count++;
     }
 
-    make_prism(state->engine, 3, -5, -5, 3, 10, 1);
     printf("mesh count: %i\n", state->engine->mesh_count);
 
     while (state->running) {

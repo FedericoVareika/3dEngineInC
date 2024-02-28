@@ -271,6 +271,19 @@ static void update_time(state_t *state) {
         state->time.fps = state->time.frames;
         state->time.frames = 0;
         state->time.last_second = state->time.last_frame;
+
+        state->time_tracking.input_process_time_percentage =
+            (float)state->time_tracking.input_process_time /
+            (float)state->time_tracking.total_time;
+        state->time_tracking.update_time_percentage =
+            (float)state->time_tracking.update_time /
+            (float)state->time_tracking.total_time;
+        state->time_tracking.mesh_draw_time_percentage =
+            (float)state->time_tracking.mesh_draw_time /
+            (float)state->time_tracking.total_time;
+        state->time_tracking.render_time_percentage =
+            (float)state->time_tracking.render_time /
+            (float)state->time_tracking.total_time;
     }
 }
 

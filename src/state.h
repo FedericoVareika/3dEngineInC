@@ -6,6 +6,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -15,6 +16,22 @@
 
 typedef struct {
     bool running;
+
+    struct {
+        Uint64 input_process_time;  
+        float input_process_time_percentage; 
+
+        Uint64 update_time;  
+        float update_time_percentage; 
+
+        Uint64 mesh_draw_time;  
+        float mesh_draw_time_percentage; 
+
+        Uint64 render_time;  
+        float render_time_percentage; 
+
+        Uint64 total_time; 
+    } time_tracking;
 
     struct {
         Uint64 last_second;

@@ -144,12 +144,19 @@ void draw_triangle(state_t *state,
                    const vec3_t B,
                    const vec3_t C,
                    const vec3_t face_normal) {
-    fill_triangle(state->buffers.frame_buffer,
-                  state->buffers.z_buffer,
-                  &A,
-                  &B,
-                  &C,
-                  &face_normal,
-                  &state->engine->directional_light);
-    triangle_wireframe(state->buffers.wireframe_buffer, &A, &B, &C);
+    switch (state->flags.render_flag) {
+    case FRAME_BUFFER:
+    case Z_BUFFER:
+        fill_triangle(state->buffers.frame_buffer,
+                      state->buffers.z_buffer,
+                      &A,
+                      &B,
+                      &C,
+                      &face_normal,
+                      &state->engine->directional_light);
+        break;
+    case WIREFRAME:
+        triangle_wireframe(state->buffers.wireframe_buffer, &A, &B, &C);
+        break;
+    }
 }

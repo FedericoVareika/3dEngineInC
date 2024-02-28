@@ -68,7 +68,7 @@ void make_prism(
     int index_count = triangle_count * 3;
 
     int pos = engine->mesh_count;
-    engine->meshes[pos]->vertices = malloc(sizeof(vec3_t) * vertex_count);
+    engine->meshes[pos]->vertices = malloc(sizeof(vec3_t) * vertex_count); // HERE
     if (!engine->meshes[pos]->vertices) {
         fprintf(stderr, "Vertices malloc failed");
         return;

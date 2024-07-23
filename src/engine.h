@@ -7,9 +7,9 @@
 
 #define MAX_MESHES 100
 
-#define CAMERA_SPEED_X 10
-#define CAMERA_SPEED_Y 10
-#define CAMERA_SPEED_Z 40
+#define CAMERA_SPEED_X 50
+#define CAMERA_SPEED_Y 50
+#define CAMERA_SPEED_Z 50
 
 #define CAMERA_ROTATION_SPEED 100 * PI / 180;
 
@@ -24,6 +24,8 @@ typedef struct mesh_t {
     vec3_t *normals;
 
     unsigned short *indices;
+    /* unsigned short *t_indices; */
+    /* unsigned short *n_indices; */
 } mesh_t;
 
 typedef struct model_t {

@@ -8,7 +8,6 @@
 
 #include "visuals/shapes.h"
 
-
 #include "./rendering/buffer_drawing.h"
 
 engine_t *engine = NULL;
@@ -56,7 +55,8 @@ char *get_gui_text(state_t *state) {
 
     // CAMERA DIR
     char *time_debug_text;
-    asprintf(&time_debug_text,"\
+    asprintf(&time_debug_text,
+             "\
              Process input:  %f \n\
              Update time:    %f \n\
              Draw time:      %f \n\
@@ -90,8 +90,8 @@ int main(void) {
         state->engine->mesh_count++;
     }
 
-    mesh = malloc(sizeof(mesh_t)); 
-    state->engine->meshes[state->engine->mesh_count] = mesh; 
+    mesh = malloc(sizeof(mesh_t));
+    state->engine->meshes[state->engine->mesh_count] = mesh;
     make_prism(state->engine, 0, 100, 0, 1, 1, 1);
 
     /* printf("mesh count: %i\n", state->engine->mesh_count); */

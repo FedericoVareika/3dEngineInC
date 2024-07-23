@@ -19,11 +19,11 @@ static void fill_triangle(uint32_t *frame_buffer,
                           const vec3_t *C,
                           const vec3_t *face_normal,
                           const vec3_t *directional_light) {
-    float x_min = floor(fmin(A->x, fmin(B->x, C->x)));
-    float x_max = ceil(fmax(A->x, fmax(B->x, C->x)));
+    float x_min = floorf(fminf(A->x, fminf(B->x, C->x)));
+    float x_max = ceilf(fmaxf(A->x, fmaxf(B->x, C->x)));
 
-    float y_min = floor(fmin(A->y, fmin(B->y, C->y)));
-    float y_max = ceil(fmax(A->y, fmax(B->y, C->y)));
+    float y_min = floorf(fminf(A->y, fminf(B->y, C->y)));
+    float y_max = ceilf(fmaxf(A->y, fmaxf(B->y, C->y)));
 
     float biasA = is_top_left(B, C) ? 0 : -0.0001f;
     float biasB = is_top_left(C, A) ? 0 : -0.0001f;
@@ -95,7 +95,7 @@ void draw_line(bool *wireframe_buffer, const vec3_t *A, const vec3_t *B) {
     float dx = B->x - A->x;
     float dy = B->y - A->y;
 
-    float step = fmax(fabs(dx), fabs(dy));
+    float step = fmaxf(fabsf(dx), fabsf(dy));
 
     if (step == 0) {
         return;
@@ -108,8 +108,6 @@ void draw_line(bool *wireframe_buffer, const vec3_t *A, const vec3_t *B) {
         return;
     }
 
-    // printf("x_step: %f, y_step: %f\n", x_step, y_step);
-
     float x = A->x;
     float y = A->y;
 
@@ -117,8 +115,8 @@ void draw_line(bool *wireframe_buffer, const vec3_t *A, const vec3_t *B) {
     bool after_y = false;
 
     while (!after_x && !after_y) {
-        int y_int = (y > (floor(y) + 0.5f)) ? ceil(y) : floor(y);
-        int x_int = (x > (floor(x) + 0.5f)) ? ceil(x) : floor(x);
+        int y_int = (y > (floorf(y) + 0.5f)) ? ceilf(y) : floorf(y);
+        int x_int = (x > (floorf(x) + 0.5f)) ? ceilf(x) : floorf(x);
         wireframe_buffer[WINDOW_WIDTH * y_int + x_int] = true;
         x += x_step;
         y += y_step;

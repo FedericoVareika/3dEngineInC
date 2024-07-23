@@ -72,7 +72,6 @@ bool create_window(state_t *state) {
     }
 
     // TEXTURES
-
     // frame buffer texture
     state->textures.frame_buffer_texture =
         SDL_CreateTexture(state->renderer,

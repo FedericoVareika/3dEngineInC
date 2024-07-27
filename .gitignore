@@ -1,3 +1,10 @@
 .cache
 .git 
 compile_commands.json
+.DS_Store
+a.out
+a.out.dSYM
+a.out.dSYM/Contents
+engine.dSYM
+engine.dSYM/Contents
+log

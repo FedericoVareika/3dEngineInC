@@ -7,12 +7,25 @@ vec3_t vec3_sub(const vec3_t *a, const vec3_t *b) {
     return (vec3_t){a->x - b->x, a->y - b->y, a->z - b->z};
 }
 
+vec2_t vec2_sub(const vec2_t *a, const vec2_t *b) {
+    // return (vec3_t){a->x - b->x, a->y - b->y, a->z - b->z, a->color};
+    return (vec2_t){a->x - b->x, a->y - b->y};
+}
+
 vec3_t vec3_add(const vec3_t *a, const vec3_t *b) {
     return (vec3_t){a->x + b->x, a->y + b->y, a->z + b->z};
 }
 
+vec2_t vec2_add(const vec2_t *a, const vec2_t *b) {
+    return (vec2_t){a->x + b->x, a->y + b->y};
+}
+
 vec3_t vec3_mul(const vec3_t *a, const float factor) {
     return (vec3_t){a->x * factor, a->y * factor, a->z * factor};
+}
+
+vec2_t vec2_mul(const vec2_t *a, const float factor) {
+    return (vec2_t){a->x * factor, a->y * factor};
 }
 
 vec3_t vec3_norm(const vec3_t *v) {
@@ -90,7 +103,10 @@ float distance_to_plane(const vec4_t *plane, const vec3_t *point) {
 
 vec3_t intersection_plane_segment(const vec4_t *plane,
                                   const vec3_t *A,
-                                  const vec3_t *B) {
+                                  const vec3_t *A_uv,
+                                  const vec3_t *B,
+                                  const vec3_t *B_uv,
+                                  vec3_t *new_uv) {
     // Plane = (N_x, N_y, N_z, d), N being the normal to the plane and d the
     // distance to (0, 0, 0)
     // This is the parametric equation of a plane or:
@@ -107,6 +123,12 @@ vec3_t intersection_plane_segment(const vec4_t *plane,
 
     float t = (d - vec3_dot(&N, A)) / (vec3_dot(&N, &AB));
     vec3_t tAB = vec3_mul(&AB, t);
+
+    if (A_uv != NULL && B_uv != NULL) {
+        vec3_t AB_uv = vec3_sub(B_uv, A_uv);
+        vec3_t tAB_uv = vec3_mul(&AB_uv, t);
+        *new_uv = vec3_add(A_uv, &tAB_uv);
+    }
 
     return vec3_add(A, &tAB);
 }

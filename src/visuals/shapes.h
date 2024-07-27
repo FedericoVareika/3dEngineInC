@@ -23,8 +23,8 @@ void make_unit_cube(engine_t *engine) {
         return;
     }
 
-    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
-    if (!engine->meshes[pos]->indices) {
+    engine->meshes[pos]->v_indices = malloc(sizeof(unsigned int) * index_count);
+    if (!engine->meshes[pos]->v_indices) {
         fprintf(stderr, "Indices malloc failed");
         return;
     }
@@ -46,7 +46,7 @@ void make_unit_cube(engine_t *engine) {
     vertices[6] = (vec3_t){1, 1, -1}; // right top far
     vertices[7] = (vec3_t){1, 0, -1}; // right bottom far
 
-    unsigned short *indices = (unsigned short[36]){
+    unsigned int *indices = (unsigned int[36]){
         0, 1, 2, 0, 2, 3, // south wall
         7, 6, 5, 4, 7, 5, // north wall
         4, 0, 3, 4, 3, 7, // down wall
@@ -56,7 +56,7 @@ void make_unit_cube(engine_t *engine) {
     };
 
     for (int i = 0; i < index_count; i++) {
-        engine->meshes[pos]->indices[i] = indices[i];
+        engine->meshes[pos]->v_indices[i] = indices[i];
     }
     engine->mesh_count++;
 }
@@ -74,8 +74,8 @@ void make_prism(
         return;
     }
 
-    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
-    if (!engine->meshes[pos]->indices) {
+    engine->meshes[pos]->v_indices = malloc(sizeof(unsigned int) * index_count);
+    if (!engine->meshes[pos]->v_indices) {
         fprintf(stderr, "Indices malloc failed");
         return;
     }
@@ -97,9 +97,9 @@ void make_prism(
     vertices[6] = (vec3_t){x + w, y + h, z - d}; // right top far
     vertices[7] = (vec3_t){x + w, y, z - d};     // right bottom far
 
-    // unsigned short *indices = engine->meshes[pos].indices;
+    // unsigned int *indices = engine->meshes[pos].indices;
 
-    unsigned short *indices = (unsigned short[36]){
+    unsigned int *indices = (unsigned int[36]){
         0, 1, 2, 0, 2, 3, // south wall
         7, 6, 5, 4, 7, 5, // north wall
         4, 0, 3, 4, 3, 7, // down wall
@@ -109,7 +109,7 @@ void make_prism(
     };
 
     for (int i = 0; i < index_count; i++) {
-        engine->meshes[pos]->indices[i] = indices[i];
+        engine->meshes[pos]->v_indices[i] = indices[i];
     }
 
     engine->mesh_count++;
@@ -128,8 +128,8 @@ void make_triangle(engine_t *engine) {
         return;
     }
 
-    engine->meshes[pos]->indices = malloc(sizeof(unsigned short) * index_count);
-    if (!engine->meshes[pos]->indices) {
+    engine->meshes[pos]->v_indices = malloc(sizeof(unsigned int) * index_count);
+    if (!engine->meshes[pos]->v_indices) {
         fprintf(stderr, "Indices malloc failed");
         return;
     }
@@ -143,7 +143,7 @@ void make_triangle(engine_t *engine) {
     vertices[1] = (vec3_t){0, 1, 0}; // left top near
     vertices[2] = (vec3_t){1, 1, 0}; // right top near
 
-    engine->meshes[pos]->indices = (unsigned short[3]){0, 1, 2};
+    engine->meshes[pos]->v_indices = (unsigned int[3]){0, 1, 2};
     engine->mesh_count++;
 }
 

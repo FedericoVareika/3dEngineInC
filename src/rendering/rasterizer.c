@@ -15,10 +15,16 @@ static float edge_cross(const vec3_t *A, const vec3_t *B, const vec3_t *C) {
 static void fill_triangle(uint32_t *frame_buffer,
                           float *z_buffer,
                           const vec3_t *A,
+                          const vec3_t *A_uv,
                           const vec3_t *B,
+                          const vec3_t *B_uv,
                           const vec3_t *C,
+                          const vec3_t *C_uv,
                           const vec3_t *face_normal,
-                          const vec3_t *directional_light) {
+                          const vec3_t *directional_light,
+                          const tex_t *tex) {
+    bool has_tex = A_uv != NULL && B_uv != NULL && C_uv != NULL;
+
     float x_min = floorf(fminf(A->x, fminf(B->x, C->x)));
     float x_max = ceilf(fmaxf(A->x, fmaxf(B->x, C->x)));
 
@@ -50,7 +56,6 @@ static void fill_triangle(uint32_t *frame_buffer,
         float wA = wA_row;
         float wB = wB_row;
         float wC = wC_row;
-        // printf("wa: %f, wb: %f, wc: %f\n", wA, wB, wC);
 
         bool has_been_inside = false;
 
@@ -67,12 +72,41 @@ static void fill_triangle(uint32_t *frame_buffer,
                 float lum = vec3_dot(face_normal, directional_light);
                 lum = lum / 2 + 0.5;
 
-                uint32_t a = (uint32_t)(0xFF) << 24;
-                uint32_t r = (uint32_t)(0xFF * lum) << 16; // * b_coords.x
-                uint32_t g = (uint32_t)(0xFF * lum) << 8;  // * b_coords.y
-                uint32_t b = (uint32_t)(0xFF * lum) << 0;  // * b_coords.z
-                uint32_t color = a + r + g + b;
-                /* color = 0xFFCCCCCC; */
+                uint32_t color;
+                uint32_t a, r, g, b;
+
+                if (has_tex) {
+                    float u = b_coords.x * A_uv->x + b_coords.y * B_uv->x +
+                              b_coords.z * C_uv->x;
+                    float v = b_coords.x * A_uv->y + b_coords.y * B_uv->y +
+                              b_coords.z * C_uv->y;
+                    float w = b_coords.x * A_uv->z + b_coords.y * B_uv->z +
+                              b_coords.z * C_uv->z;
+
+                    /* uint u_coord = lerp(0, tex->h, u) / w; */
+                    /* uint v_coord = lerp(0, tex->w, v) / w; */
+                    uint u_coord = floorf(lerp(0, tex->w, u/w));
+                    uint v_coord = floorf(lerp(0, tex->h, v/w));
+
+                    r = tex->data[(v_coord * tex->w + u_coord) * 4 + 0];
+                    g = tex->data[(v_coord * tex->w + u_coord) * 4 + 1];
+                    b = tex->data[(v_coord * tex->w + u_coord) * 4 + 2];
+                    a = tex->data[(v_coord * tex->w + u_coord) * 4 + 3];
+                } else {
+                    color = (uint32_t)0xFFFFFFFF;
+                    /* color = 0xFFCCCCCC; */
+                    a = 0xFF & (color >> 24);
+                    r = 0xFF & (color >> 16);
+                    g = 0xFF & (color >> 8);
+                    b = 0xFF & (color >> 0);
+                }
+
+                r = (int)(r * lum) << 24;
+                g = (int)(g * lum) << 16;
+                b = (int)(b * lum) << 8;
+                a = (int)(a * lum) << 0;
+
+                color = r + g + b + a;
 
                 frame_buffer[SCREEN_WIDTH * y + x] = color;
                 z_buffer[SCREEN_WIDTH * y + x] = z;
@@ -139,19 +173,27 @@ void triangle_wireframe(bool *wireframe_buffer,
 
 void draw_triangle(state_t *state,
                    const vec3_t A,
+                   const vec3_t *A_uv,
                    const vec3_t B,
+                   const vec3_t *B_uv,
                    const vec3_t C,
-                   const vec3_t face_normal) {
+                   const vec3_t *C_uv,
+                   const vec3_t face_normal,
+                   const tex_t *tex) {
     switch (state->flags.render_flag) {
     case FRAME_BUFFER:
     case Z_BUFFER:
         fill_triangle(state->buffers.frame_buffer,
                       state->buffers.z_buffer,
                       &A,
+                      A_uv,
                       &B,
+                      B_uv,
                       &C,
+                      C_uv,
                       &face_normal,
-                      &state->engine->directional_light);
+                      &state->engine->directional_light,
+                      tex);
         break;
     case WIREFRAME:
         triangle_wireframe(state->buffers.wireframe_buffer, &A, &B, &C);

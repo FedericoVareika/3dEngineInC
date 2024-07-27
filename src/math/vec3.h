@@ -49,7 +49,10 @@ float vec4_dot(const vec4_t *A, const vec4_t *B);
 float distance_to_plane(const vec4_t *plane, const vec3_t *point);
 vec3_t intersection_plane_segment(const vec4_t *plane,
                                   const vec3_t *A,
-                                  const vec3_t *B);
+                                  const vec3_t *A_uv,
+                                  const vec3_t *B,
+                                  const vec3_t *B_uv,
+                                  vec3_t *new_uv);
 
 // ---------------------------------------------- //
 // ---------------------------------------------- //

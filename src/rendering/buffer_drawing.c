@@ -4,9 +4,15 @@
 
 void project_and_draw(state_t *state,
                       const vec3_t *A,
+                      const vec3_t *A_uv,
                       const vec3_t *B,
-                      const vec3_t *C, 
-                      const vec3_t *face_normal) {
+                      const vec3_t *B_uv,
+                      const vec3_t *C,
+                      const vec3_t *C_uv,
+                      const vec3_t *face_normal,
+                      const tex_t *tex) {
+    /* printf("After clipping\n"); */
+
     vec4_t A_4 = vec3_to_vec4(A);
     vec4_t B_4 = vec3_to_vec4(B);
     vec4_t C_4 = vec3_to_vec4(C);
@@ -15,6 +21,16 @@ void project_and_draw(state_t *state,
     matrix_transformation(&A_4, &state->engine->projection_transform);
     matrix_transformation(&B_4, &state->engine->projection_transform);
     matrix_transformation(&C_4, &state->engine->projection_transform);
+
+    vec3_t A_uv_proj;
+    vec3_t B_uv_proj;
+    vec3_t C_uv_proj;
+
+    if (A_uv != NULL && B_uv != NULL && C_uv != NULL) {
+        A_uv_proj = vec3_mul(A_uv, 1 / A_4.w);
+        B_uv_proj = vec3_mul(B_uv, 1 / B_4.w);
+        C_uv_proj = vec3_mul(C_uv, 1 / C_4.w);
+    }
 
     vec3_t A_proj = vec4_to_vec3(&A_4);
     vec3_t B_proj = vec4_to_vec3(&B_4);
@@ -43,15 +59,28 @@ void project_and_draw(state_t *state,
     const vec3_t C_vp = vec4_to_vec3(&C_4);
 
     // ---------------------- Draw Triangle ----------------------- //
-    draw_triangle(state, A_vp, B_vp, C_vp, *face_normal);
+    draw_triangle(state,
+                  A_vp,
+                  A_uv == NULL ? NULL : &A_uv_proj,
+                  B_vp,
+                  B_uv == NULL ? NULL : &B_uv_proj,
+                  C_vp,
+                  C_uv == NULL ? NULL : &C_uv_proj,
+                  *face_normal,
+                  tex);
+    /* draw_textured_triangle(state, A_vp, B_vp, C_vp, *face_normal); */
 }
 
 void clip_and_draw(state_t *state,
                    const vec3_t *A,
+                   const vec3_t *A_uv,
                    const vec3_t *B,
+                   const vec3_t *B_uv,
                    const vec3_t *C,
-                   const int plane_id, 
-                   const vec3_t *face_normal) {
+                   const vec3_t *C_uv,
+                   const int plane_id,
+                   const vec3_t *face_normal,
+                   const tex_t *tex) {
     // If the plane_id is invalid stop
     if (plane_id >= CLIPPING_PLANES) {
         return;
@@ -59,7 +88,7 @@ void clip_and_draw(state_t *state,
 
     // If already clipped against all planes draw the triangle
     if (plane_id < 0) {
-        project_and_draw(state, A, B, C, face_normal);
+        project_and_draw(state, A, A_uv, B, B_uv, C, C_uv, face_normal, tex);
         return;
     }
 
@@ -83,17 +112,56 @@ void clip_and_draw(state_t *state,
     // to the plane intersection with the triangle edges
     if (negative_counter == 2) {
         if (da > 0) {
-            vec3_t B_ = intersection_plane_segment(&plane, A, B);
-            vec3_t C_ = intersection_plane_segment(&plane, A, C);
-            clip_and_draw(state, A, &B_, &C_, plane_id - 1, face_normal);
+            vec3_t B_uv_;
+            vec3_t B_ =
+                intersection_plane_segment(&plane, A, A_uv, B, B_uv, &B_uv_);
+            vec3_t C_uv_;
+            vec3_t C_ =
+                intersection_plane_segment(&plane, A, A_uv, C, C_uv, &C_uv_);
+            clip_and_draw(state,
+                          A,
+                          A_uv,
+                          &B_,
+                          A_uv == NULL ? NULL : &B_uv_,
+                          &C_,
+                          A_uv == NULL ? NULL : &C_uv_,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         } else if (db > 0) {
-            vec3_t A_ = intersection_plane_segment(&plane, B, A);
-            vec3_t C_ = intersection_plane_segment(&plane, B, C);
-            clip_and_draw(state, &A_, B, &C_, plane_id - 1, face_normal);
+            vec3_t A_uv_;
+            vec3_t A_ =
+                intersection_plane_segment(&plane, B, B_uv, A, A_uv, &A_uv_);
+            vec3_t C_uv_;
+            vec3_t C_ =
+                intersection_plane_segment(&plane, B, B_uv, C, C_uv, &C_uv_);
+            clip_and_draw(state,
+                          &A_,
+                          A_uv == NULL ? NULL : &A_uv_,
+                          B,
+                          B_uv,
+                          &C_,
+                          A_uv == NULL ? NULL : &C_uv_,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         } else if (dc > 0) {
-            vec3_t A_ = intersection_plane_segment(&plane, C, A);
-            vec3_t B_ = intersection_plane_segment(&plane, C, B);
-            clip_and_draw(state, &A_, &B_, C, plane_id - 1, face_normal);
+            vec3_t A_uv_;
+            vec3_t A_ =
+                intersection_plane_segment(&plane, C, C_uv, A, A_uv, &A_uv_);
+            vec3_t B_uv_;
+            vec3_t B_ =
+                intersection_plane_segment(&plane, C, C_uv, B, B_uv, &B_uv_);
+            clip_and_draw(state,
+                          &A_,
+                          A_uv == NULL ? NULL : &A_uv_,
+                          &B_,
+                          A_uv == NULL ? NULL : &B_uv_,
+                          C,
+                          C_uv,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         }
         return;
     }
@@ -102,43 +170,144 @@ void clip_and_draw(state_t *state,
     // and two new triangles from them to clip
     if (negative_counter == 1) {
         if (da < 0) {
-            vec3_t A_1 = intersection_plane_segment(&plane, A, B);
-            vec3_t A_2 = intersection_plane_segment(&plane, A, C);
-            clip_and_draw(state, B, &A_2, &A_1, plane_id - 1, face_normal);
-            clip_and_draw(state, B, C, &A_2, plane_id - 1, face_normal);
+            vec3_t A_uv_1;
+            vec3_t A_1 =
+                intersection_plane_segment(&plane, A, A_uv, B, B_uv, &A_uv_1);
+            vec3_t A_uv_2;
+            vec3_t A_2 =
+                intersection_plane_segment(&plane, A, A_uv, C, C_uv, &A_uv_2);
+            clip_and_draw(state,
+                          B,
+                          B_uv,
+                          &A_2,
+                          A_uv == NULL ? NULL : &A_uv_2,
+                          &A_1,
+                          A_uv == NULL ? NULL : &A_uv_1,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
+            clip_and_draw(state,
+                          B,
+                          B_uv,
+                          C,
+                          C_uv,
+                          &A_2,
+                          A_uv == NULL ? NULL : &A_uv_2,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         } else if (db < 0) {
-            vec3_t B_1 = intersection_plane_segment(&plane, B, C);
-            vec3_t B_2 = intersection_plane_segment(&plane, B, A);
-            clip_and_draw(state, C, &B_2, &B_1, plane_id - 1, face_normal);
-            clip_and_draw(state, C, A, &B_2, plane_id - 1, face_normal);
+            vec3_t B_uv_1;
+            vec3_t B_1 =
+                intersection_plane_segment(&plane, B, B_uv, C, C_uv, &B_uv_1);
+            vec3_t B_uv_2;
+            vec3_t B_2 =
+                intersection_plane_segment(&plane, B, B_uv, A, A_uv, &B_uv_2);
+            clip_and_draw(state,
+                          C,
+                          C_uv,
+                          &B_2,
+                          A_uv == NULL ? NULL : &B_uv_2,
+                          &B_1,
+                          A_uv == NULL ? NULL : &B_uv_1,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
+            clip_and_draw(state,
+                          C,
+                          C_uv,
+                          A,
+                          A_uv,
+                          &B_2,
+                          A_uv == NULL ? NULL : &B_uv_2,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         } else if (dc < 0) {
-            vec3_t C_1 = intersection_plane_segment(&plane, C, A);
-            vec3_t C_2 = intersection_plane_segment(&plane, C, B);
-            clip_and_draw(state, A, &C_2, &C_1, plane_id - 1, face_normal);
-            clip_and_draw(state, A, B, &C_2, plane_id - 1, face_normal);
+            vec3_t C_uv_1;
+            vec3_t C_1 =
+                intersection_plane_segment(&plane, C, C_uv, A, A_uv, &C_uv_1);
+            vec3_t C_uv_2;
+            vec3_t C_2 =
+                intersection_plane_segment(&plane, C, C_uv, B, B_uv, &C_uv_2);
+            clip_and_draw(state,
+                          A,
+                          A_uv,
+                          &C_2,
+                          A_uv == NULL ? NULL : &C_uv_2,
+                          &C_1,
+                          A_uv == NULL ? NULL : &C_uv_1,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
+            clip_and_draw(state,
+                          A,
+                          A_uv,
+                          B,
+                          B_uv,
+                          &C_2,
+                          A_uv == NULL ? NULL : &C_uv_2,
+                          plane_id - 1,
+                          face_normal,
+                          tex);
         }
         return;
     }
 
-    clip_and_draw(state, A, B, C, plane_id - 1, face_normal);
+    clip_and_draw(
+        state, A, A_uv, B, B_uv, C, C_uv, plane_id - 1, face_normal, tex);
 }
 
 void process_and_draw_triangle(state_t *state,
                                const mesh_t *mesh,
                                const int triangle_id) {
+    /* printf("triangle id: %d\n", triangle_id); */
     // Assign vertices
-    unsigned short A_index = mesh->indices[triangle_id * 3 + 0];
-    unsigned short B_index = mesh->indices[triangle_id * 3 + 1];
-    unsigned short C_index = mesh->indices[triangle_id * 3 + 2];
+    unsigned int A_index = mesh->v_indices[triangle_id * 3 + 0];
+    unsigned int B_index = mesh->v_indices[triangle_id * 3 + 1];
+    unsigned int C_index = mesh->v_indices[triangle_id * 3 + 2];
     const vec3_t A = mesh->vertices[A_index];
     const vec3_t B = mesh->vertices[B_index];
     const vec3_t C = mesh->vertices[C_index];
 
+    /* printf("Before accessing uv's\n"); */
+    vec3_t A_uv;
+    vec3_t B_uv;
+    vec3_t C_uv;
+    if (mesh->tex_coords != NULL) {
+        unsigned int A_uv_index = mesh->t_indices[triangle_id * 3 + 0];
+        unsigned int B_uv_index = mesh->t_indices[triangle_id * 3 + 1];
+        unsigned int C_uv_index = mesh->t_indices[triangle_id * 3 + 2];
+
+        A_uv = mesh->tex_coords[A_uv_index];
+        B_uv = mesh->tex_coords[B_uv_index];
+        C_uv = mesh->tex_coords[C_uv_index];
+    }
+
     // Calculate face normal
+    vec3_t face_normal;
     vec3_t AB = vec3_sub(&B, &A);
     vec3_t AC = vec3_sub(&C, &A);
-    vec3_t face_normal = vec3_cross(&AC, &AB);
-    face_normal = vec3_norm(&face_normal);
+    if (mesh->normals != NULL) {
+        unsigned int A_norm_index = mesh->n_indices[triangle_id * 3 + 0];
+        unsigned int B_norm_index = mesh->n_indices[triangle_id * 3 + 1];
+        unsigned int C_norm_index = mesh->n_indices[triangle_id * 3 + 2];
+
+        if (A_norm_index == -1 || B_norm_index == -1 || C_norm_index == -1) {
+            face_normal = vec3_cross(&AC, &AB);
+            face_normal = vec3_norm(&face_normal);
+        } else {
+            vec3_t A_n = mesh->normals[A_norm_index];
+            vec3_t B_n = mesh->normals[B_norm_index];
+            vec3_t C_n = mesh->normals[C_norm_index];
+            face_normal = vec3_add(&B_n, &C_n);
+            face_normal = vec3_add(&A_n, &face_normal);
+            face_normal = vec3_norm(&face_normal);
+        }
+    } else {
+        face_normal = vec3_cross(&AC, &AB);
+        face_normal = vec3_norm(&face_normal);
+    }
 
     // Assign vec4
     vec4_t A_4 = vec3_to_vec4(&A);
@@ -161,15 +330,28 @@ void process_and_draw_triangle(state_t *state,
     vec3_t face_normal_view = vec3_cross(&AC, &AB);
     face_normal_view = vec3_norm(&face_normal_view);
 
+    // ------------------------ Backface Culling -------------------------
+    // //
     if (vec3_dot(&A_view, &face_normal_view) > 0)
         return;
 
-    // ------------------------ Backface Culling -------------------------
-    // //
-
     // ----------------------- Triangle clipping -------------------------
     // //
-    clip_and_draw(state, &A_view, &B_view, &C_view, CLIPPING_PLANES - 1, &face_normal);
+
+    vec3_t *A_uvp = mesh->tex_coords == NULL ? NULL : &A_uv;
+    vec3_t *B_uvp = mesh->tex_coords == NULL ? NULL : &B_uv;
+    vec3_t *C_uvp = mesh->tex_coords == NULL ? NULL : &C_uv;
+    /* printf("Before clipping\n"); */
+    clip_and_draw(state,
+                  &A_view,
+                  A_uvp,
+                  &B_view,
+                  B_uvp,
+                  &C_view,
+                  C_uvp,
+                  CLIPPING_PLANES - 1,
+                  &face_normal,
+                  &mesh->tex);
 }
 
 void draw_meshes(state_t *state) {

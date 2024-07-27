@@ -70,7 +70,10 @@ void destroy_engine(engine_t *engine) {
         // free(engine->meshes[i].tex_coords);
         // free(engine->meshes[i].normals);
 
-        free(engine->meshes[i]->indices);
+        free(engine->meshes[i]->v_indices);
+        free(engine->meshes[i]->t_indices);
+        free(engine->meshes[i]->n_indices);
+        free(engine->meshes[i]->tex.data);
     }
     free(engine->meshes);
     free(engine->camera);

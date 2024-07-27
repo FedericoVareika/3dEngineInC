@@ -3,29 +3,39 @@
 
 #include "./math/vec3.h"
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #define MAX_MESHES 100
 
-#define CAMERA_SPEED_X 50
-#define CAMERA_SPEED_Y 50
-#define CAMERA_SPEED_Z 50
+#define CAMERA_SPEED_X 10
+#define CAMERA_SPEED_Y 10
+#define CAMERA_SPEED_Z 10
 
 #define CAMERA_ROTATION_SPEED 100 * PI / 180;
 
 #define CLIPPING_PLANES 6
+
+typedef struct tex_t {
+    uint8_t *data;
+    unsigned int n;
+    unsigned int w;
+    unsigned int h;
+} tex_t;
 
 typedef struct mesh_t {
     int vertex_count;
     int triangle_count;
 
     vec3_t *vertices;
-    vec2_t *tex_coords;
+    vec3_t *tex_coords;
     vec3_t *normals;
 
-    unsigned short *indices;
-    /* unsigned short *t_indices; */
-    /* unsigned short *n_indices; */
+    unsigned int *v_indices;
+    unsigned int *t_indices;
+    unsigned int *n_indices;
+
+    tex_t tex;
 } mesh_t;
 
 typedef struct model_t {
@@ -55,7 +65,6 @@ typedef struct engine_t {
     float left;
     float bottom;
     float right;
-    //
 
     // frustum clipping planes
     // Normal.Point = distance

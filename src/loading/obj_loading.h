@@ -1,10 +1,8 @@
-#ifndef OBJ_LOADING_H
-#define OBJ_LOADING_H
+#pragma once
 
 #include "../engine.h"
 
 bool load_model(const char* filename, model_t *model);
-bool load_mesh(const char* filename, mesh_t *mesh);
+bool load_mesh(const char* filename, const char* sprite_filename, mesh_t *mesh);
 
-#endif
 

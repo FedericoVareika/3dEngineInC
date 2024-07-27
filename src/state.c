@@ -75,7 +75,7 @@ bool create_window(state_t *state) {
     // frame buffer texture
     state->textures.frame_buffer_texture =
         SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA32,
+                          SDL_PIXELFORMAT_RGBA8888,
                           SDL_TEXTUREACCESS_STREAMING,
                           SCREEN_WIDTH,
                           SCREEN_HEIGHT);
@@ -83,7 +83,7 @@ bool create_window(state_t *state) {
     // z buffer texture
     state->textures.z_buffer_texture =
         SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA32,
+                          SDL_PIXELFORMAT_RGBA8888,
                           SDL_TEXTUREACCESS_STREAMING,
                           SCREEN_WIDTH,
                           SCREEN_HEIGHT);
@@ -91,7 +91,7 @@ bool create_window(state_t *state) {
     // wireframe texture
     state->textures.wireframe_texture =
         SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA32,
+                          SDL_PIXELFORMAT_RGBA8888,
                           SDL_TEXTUREACCESS_STREAMING,
                           SCREEN_WIDTH,
                           SCREEN_HEIGHT);
@@ -100,7 +100,7 @@ bool create_window(state_t *state) {
 
     // gui texture
     state->textures.gui_texture = SDL_CreateTexture(state->renderer,
-                                                    SDL_PIXELFORMAT_RGBA32,
+                                                    SDL_PIXELFORMAT_RGBA8888,
                                                     SDL_TEXTUREACCESS_TARGET,
                                                     SCREEN_WIDTH,
                                                     SCREEN_HEIGHT);
@@ -114,6 +114,8 @@ bool create_window(state_t *state) {
 }
 
 void destroy_window(state_t *state) {
+    destroy_engine(state->engine);
+
     SDL_DestroyTexture(state->textures.gui_texture);
     SDL_DestroyTexture(state->textures.wireframe_texture);
     SDL_DestroyTexture(state->textures.z_buffer_texture);
@@ -363,7 +365,7 @@ void render(state_t *state) {
 
     SDL_RenderPresent(state->renderer);
 
-    clear_framebuffer(state->buffers.frame_buffer, 0xFF000000);
+    clear_framebuffer(state->buffers.frame_buffer, 0x000000FF);
     clear_zbuffer(state->buffers.z_buffer);
     clear_wireframe_buffer(state->buffers.wireframe_buffer, false);
 }
@@ -379,7 +381,6 @@ void render_framebuffer(state_t *state) {
                      NULL,
                      0,
                      NULL,
-                     // 0);
                      SDL_FLIP_VERTICAL);
 }
 
@@ -394,10 +395,11 @@ void convert_z_buffer_to_greyscale(uint32_t *greyscale_buffer,
                 clamped_value = 0xFF;
             }
 
-            uint32_t color = 0xFF;
+            uint32_t color = 0;
             color = (color << 8) + (uint32_t)(0xFF * clamped_value);
             color = (color << 8) + (uint32_t)(0xFF * clamped_value);
             color = (color << 8) + (uint32_t)(0xFF * clamped_value);
+            color = (color << 8) + 0xFF;
 
             greyscale_buffer[(SCREEN_WIDTH * y) + x] = color;
         }
@@ -424,13 +426,13 @@ void render_z_buffer(state_t *state) {
 
 void convert_wireframe_buffer_to_color(uint32_t *color_buffer,
                                        const bool *wireframe_buffer) {
-    uint32_t color = 0xFFDDDDDD;
+    uint32_t color = 0xDDDDDDFF;
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             if (wireframe_buffer[SCREEN_WIDTH * y + x]) {
                 color_buffer[SCREEN_WIDTH * y + x] = color;
             } else {
-                color_buffer[SCREEN_WIDTH * y + x] = 0xFF000000;
+                color_buffer[SCREEN_WIDTH * y + x] = 0x000000FF;
             }
         }
     }
@@ -442,7 +444,7 @@ void render_wireframe_buffer(state_t *state) {
                                       state->buffers.wireframe_buffer);
 
     SDL_SetRenderTarget(state->renderer, state->textures.wireframe_texture);
-    SDL_SetRenderDrawColor(state->renderer, 0xFF, 0x0, 0x0, 0x0);
+    SDL_SetRenderDrawColor(state->renderer, 0x0, 0x0, 0x0, 0xFF);
     SDL_RenderClear(state->renderer);
     SDL_SetRenderTarget(state->renderer, 0);
 

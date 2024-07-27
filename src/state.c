@@ -389,6 +389,11 @@ void convert_z_buffer_to_greyscale(uint32_t *greyscale_buffer,
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             float clamped_value = z_buffer[y * SCREEN_WIDTH + x];
+            clamped_value += 1;
+            clamped_value /= 2;
+            clamped_value *= clamped_value;
+            clamped_value *= clamped_value;
+            clamped_value *= clamped_value;
             if (clamped_value < -1)
                 clamped_value = 0;
             if (clamped_value > 1) {

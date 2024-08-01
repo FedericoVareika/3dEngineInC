@@ -11,8 +11,8 @@ FILES += ./src/loading/*.c
 FILES += ./src/data_structures/*.c
 
 CFLAGS = -Wall -std=c11 $(LDFLAGS) $(INC)
-CFLAGS += -O2
-# CFLAGS += -O0
+# CFLAGS += -O2
+CFLAGS += -O0
 
 build: 
 	gcc $(CFLAGS) -o $(PROGRAM_NAME) $(FILES) $(LDLIBS)

@@ -60,13 +60,20 @@ static void fill_triangle(uint32_t *frame_buffer,
         bool has_been_inside = false;
 
         for (int x = x_min; x <= x_max; x++) {
-            vec3_t b_coords = {
-                (wA - biasA) / area, (wB - biasB) / area, (wC - biasC) / area};
-
             bool inside_triangle = wA >= 0 && wB >= 0 && wC >= 0;
 
-            float z = b_coords.x * A->z + b_coords.y * B->z + b_coords.z * C->z;
-            bool has_pixel_priority = pixel_priority(z_buffer, x, y, z);
+            vec3_t b_coords;
+            float z;
+            bool has_pixel_priority = false;
+            if (inside_triangle) {
+                b_coords = (vec3_t){(wA - biasA) / area,
+                                    (wB - biasB) / area,
+                                    (wC - biasC) / area};
+                z = b_coords.x / A->z + b_coords.y / B->z + b_coords.z / C->z;
+                z = 1 / z;
+                has_pixel_priority = pixel_priority(z_buffer, x, y, z);
+            }
+
             if (inside_triangle && has_pixel_priority) {
                 has_been_inside = true;
                 float lum = vec3_dot(face_normal, directional_light);
@@ -83,10 +90,10 @@ static void fill_triangle(uint32_t *frame_buffer,
                     float w = b_coords.x * A_uv->z + b_coords.y * B_uv->z +
                               b_coords.z * C_uv->z;
 
-                    /* uint u_coord = lerp(0, tex->h, u) / w; */
-                    /* uint v_coord = lerp(0, tex->w, v) / w; */
-                    uint u_coord = floorf(lerp(0, tex->w, u/w));
-                    uint v_coord = floorf(lerp(0, tex->h, v/w));
+                    /* uint u_coord = floorf(lerp(0, tex->w, u / w)); */
+                    uint u_coord = tex->w * u / w;
+                    /* uint v_coord = floorf(lerp(0, tex->h, v / w)); */
+                    uint v_coord = tex->h * v / w;
 
                     r = tex->data[(v_coord * tex->w + u_coord) * 4 + 0];
                     g = tex->data[(v_coord * tex->w + u_coord) * 4 + 1];

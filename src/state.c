@@ -313,7 +313,7 @@ void clear_wireframe_buffer(bool *wireframe_buffer, bool val) {
 void clear_zbuffer(float *zbuffer) {
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
-            zbuffer[(SCREEN_WIDTH * y) + x] = 1;
+            zbuffer[(SCREEN_WIDTH * y) + x] = INFINITY;
         }
     }
 }
@@ -388,23 +388,33 @@ void convert_z_buffer_to_greyscale(uint32_t *greyscale_buffer,
                                    float *z_buffer) {
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
-            float clamped_value = z_buffer[y * SCREEN_WIDTH + x];
-            clamped_value += 1;
-            clamped_value /= 2;
-            clamped_value *= clamped_value;
-            clamped_value *= clamped_value;
-            clamped_value *= clamped_value;
-            if (clamped_value < -1)
-                clamped_value = 0;
-            if (clamped_value > 1) {
-                clamped_value = 0xFF;
-            }
+            /* float clamped_value = z_buffer[y * SCREEN_WIDTH + x]; */
+            /* clamped_value += 1; */
+            /* clamped_value /= 2; */
+            /* clamped_value *= clamped_value; */
+            /* clamped_value *= clamped_value; */
+            /* clamped_value *= clamped_value; */
+            /* if (clamped_value < -1) */
+            /*     clamped_value = 0; */
+            /* if (clamped_value > 1) { */
+            /*     clamped_value = 0xFF; */
+            /* } */
 
-            uint32_t color = 0;
-            color = (color << 8) + (uint32_t)(0xFF * clamped_value);
-            color = (color << 8) + (uint32_t)(0xFF * clamped_value);
-            color = (color << 8) + (uint32_t)(0xFF * clamped_value);
-            color = (color << 8) + 0xFF;
+            uint32_t color = 0x000000FF;
+            float clamped_value = z_buffer[y * SCREEN_WIDTH + x];
+            if (clamped_value != INFINITY) {
+                
+                /* clamped_value = 1 / (clamped_value+1); */
+                clamped_value = 1 / clamped_value;
+                clamped_value = exp2(clamped_value);
+
+                color = (color << 8) + (uint32_t)(0xFF * clamped_value);
+                color = (color << 8) + (uint32_t)(0xFF * clamped_value);
+                color = (color << 8) + (uint32_t)(0xFF * clamped_value);
+                color = (color << 8) + 0xFF;
+                if (clamped_value > 1)
+                    color = 0xFF0000FF;
+            }
 
             greyscale_buffer[(SCREEN_WIDTH * y) + x] = color;
         }
@@ -471,6 +481,7 @@ bool pixel_priority(const float *z_buffer,
                     const int x,
                     const int y,
                     const float z) {
+    /* return z_buffer[(SCREEN_WIDTH * y) + x] >  z; */
     return z_buffer[(SCREEN_WIDTH * y) + x] > z;
 }
 

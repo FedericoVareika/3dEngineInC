@@ -12,6 +12,8 @@ static float edge_cross(const vec3_t *A, const vec3_t *B, const vec3_t *C) {
 
 // --------------------------------------------------------------------------//
 
+#ifdef __ARM_NEON__
+
 static float edge_cross_fast(const vec3_t ABC[3]) {
     return (ABC[2].x - ABC[0].x) * (ABC[1].y - ABC[0].y) -
            (ABC[2].y - ABC[0].y) * (ABC[1].x - ABC[0].x);
@@ -26,7 +28,6 @@ static float32x4_t duplicate_q_f32(const float32x4_t in) {
     return result;
 }
 
-#ifdef __ARM_NEON__
 static void fill_triangle_fast(uint32_t *frame_buffer, float *z_buffer,
                                vec3_t ABC[3], vec3_t ABC_uv[3],
                                const vec3_t *face_normal,
@@ -81,9 +82,6 @@ static void fill_triangle_fast(uint32_t *frame_buffer, float *z_buffer,
     float delta_wB_row = C.x - A.x;
     float delta_wC_row = A.x - B.x;
 
-    // biasA, biasA, biasA, biasA,
-    // biasB, biasB, biasB, biasB,
-    // biasC, biasC, biasC, biasC
     uint32x4_t biasA4 = vdupq_n_f32(biasA);
     uint32x4_t biasB4 = vdupq_n_f32(biasB);
     uint32x4_t biasC4 = vdupq_n_f32(biasC);
@@ -228,34 +226,10 @@ static void fill_triangle_fast(uint32_t *frame_buffer, float *z_buffer,
 
                     rgba_vec_8 = vrev32q_u8(rgba_vec_8);
 
-                    /* unsigned char rgba_arr_full[16]; */
-                    /* rgba_arr_full[15] = tex->data[idx3 + 0]; */
-                    /* rgba_arr_full[14] = tex->data[idx3 + 1]; */
-                    /* rgba_arr_full[13] = tex->data[idx3 + 2]; */
-                    /* rgba_arr_full[12] = tex->data[idx3 + 3]; */
-                    /* rgba_arr_full[11] = tex->data[idx2 + 0]; */
-                    /* rgba_arr_full[10] = tex->data[idx2 + 1]; */
-                    /* rgba_arr_full[9] = tex->data[idx2 + 2]; */
-                    /* rgba_arr_full[8] = tex->data[idx2 + 3]; */
-                    /* rgba_arr_full[7] = tex->data[idx1 + 0]; */
-                    /* rgba_arr_full[6] = tex->data[idx1 + 1]; */
-                    /* rgba_arr_full[5] = tex->data[idx1 + 2]; */
-                    /* rgba_arr_full[4] = tex->data[idx1 + 3]; */
-                    /* rgba_arr_full[3] = tex->data[idx0 + 0]; */
-                    /* rgba_arr_full[2] = tex->data[idx0 + 1]; */
-                    /* rgba_arr_full[1] = tex->data[idx0 + 2]; */
-                    /* rgba_arr_full[0] = tex->data[idx0 + 3]; */
-
-                    /* rgba_vec_8 = vld1q_u8(rgba_arr_full); */
-                    /* rgba_vec_32_test = vreinterpretq_u32_u8(rgba_vec_8); */
-                    /* printf("%x, %x, %x, %x\n", rgba_vec_32_test[0], */
-                    /*        rgba_vec_32_test[1], rgba_vec_32_test[2], */
-                    /*        rgba_vec_32_test[3]); */
 #endif // little endian
 
                     uint32x4_t rgba_vec_32;
                     rgba_vec_32 = vreinterpretq_u32_u8(rgba_vec_8);
-                    /* rgba_vec_32 = vrev64q_u32(rgba_vec_32); */
                     color_vec = rgba_vec_32;
                 }
 

@@ -6,7 +6,7 @@
 #include "loading/obj_loading.h"
 #include "state.h"
 
-#include "visuals/shapes.h"
+/* #include "visuals/shapes.h" */
 
 #include "rendering/buffer_drawing.h"
 
@@ -27,9 +27,7 @@ bool init(void) {
         return false;
     }
     state->engine = engine;
-    if (!create_window(state)) {
-        return false;
-    }
+    if (!create_window(state)) { return false; }
 
     state->time_tracking.input_process_time = 0;
     state->time_tracking.input_process_time_percentage = 0;
@@ -55,8 +53,7 @@ char *get_gui_text(state_t *state) {
 
     // CAMERA DIR
     char *camera_pos_text;
-    asprintf(&camera_pos_text,
-             "Camera pos:   (%f, %f, %f) \n",
+    asprintf(&camera_pos_text, "Camera pos:   (%f, %f, %f) \n",
              state->engine->camera->position.x,
              state->engine->camera->position.y,
              state->engine->camera->position.z);
@@ -75,8 +72,8 @@ char *get_gui_text(state_t *state) {
 
     // MAKE GUI TEXT
     char *gui_text;
-    asprintf(
-        &gui_text, "%s\n%s\n%s", fps_text, camera_pos_text, time_debug_text);
+    asprintf(&gui_text, "%s\n%s\n%s", fps_text, camera_pos_text,
+             time_debug_text);
 
     free(time_debug_text);
     free(camera_pos_text);
@@ -86,58 +83,59 @@ char *get_gui_text(state_t *state) {
 }
 
 char *mystrcat(char *dest, const char *src) {
-    while (*dest)
-        dest++;
-    while ((*dest++ = *src++))
-        ;
+    while (*dest) dest++;
+    while ((*dest++ = *src++));
     return --dest;
 }
 
 int main(int argc, char *argv[]) {
-    freopen("log", "w", stdout);
+    /* freopen("log", "w", stdout); */
     printf("%d\n", argc);
+    {
+        FILE *fp = fopen(
+            "assets/new_objects/Peachs Castle Exterior/Peaches Castle.mtl",
+            "r+");
+        if (!fp)
+            printf("Error loading mtl file\n");
+        else
+            fclose(fp);
+    }
 
     char obj_path[50];
     char *obj_path_p = obj_path;
     obj_path[0] = '\0';
-    char sprite_path[50];
-    char *sprite_path_p = sprite_path;
-    sprite_path[0] = '\0';
+    char object_name[50];
+    char *object_name_p = object_name;
+    object_name[0] = '\0';
 
-    obj_path_p = mystrcat(obj_path_p, "assets/objects/");
+    obj_path_p = mystrcat(obj_path_p, "assets/new_objects/");
     if (argc > 1)
         obj_path_p = mystrcat(obj_path_p, argv[1]);
     else
-        obj_path_p = mystrcat(obj_path_p, "Tree");
-    obj_path_p = mystrcat(obj_path_p, ".obj");
+        obj_path_p = mystrcat(obj_path_p, "Peachs Castle Exterior");
+    obj_path_p = mystrcat(obj_path_p, "/");
 
-    sprite_path_p = mystrcat(sprite_path_p, "assets/sprites/");
     if (argc > 2) {
-        sprite_path_p = mystrcat(sprite_path_p, argv[2]);
-        sprite_path_p = mystrcat(sprite_path_p, ".png");
+        object_name_p = mystrcat(object_name_p, argv[2]);
     } else {
-        sprite_path_p = NULL;
+        object_name_p = mystrcat(object_name_p, "Peaches Castle.obj");
     }
 
-    if (!init()) {
-        return 1;
-    }
+    if (!init()) return 1;
 
-    mesh_t *mesh = malloc(sizeof(mesh_t));
-    if (!mesh) {
+    model_t *model = malloc(sizeof(*model));
+    if (!model) {
         fprintf(stderr, "Error allocating mesh in heap.\n");
     } else {
-        bool loaded = load_mesh(
-            &obj_path[0], sprite_path_p != NULL ? &sprite_path[0] : NULL, mesh);
-        if (!loaded)
-            printf("error loading\n");
-        else {
-            state->engine->meshes[state->engine->mesh_count] = mesh;
-            state->engine->mesh_count++;
+        bool loaded = load_model(obj_path, object_name, model);
+        if (!loaded) {
+            fprintf(stderr, "Error loading model.\n");
+        } else {
+            state->engine->models[state->engine->model_count] = model;
+            state->engine->model_count++;
         }
     }
-
-    printf("mesh count: %i\n", state->engine->mesh_count);
+    printf("model count: %i\n", state->engine->model_count);
 
     Uint64 start_time;
     Uint64 time;
@@ -177,7 +175,7 @@ int main(int argc, char *argv[]) {
     }
 
     destroy_window(state);
-    freopen("/dev/stdout", "w", stdout);
+    /* freopen("/dev/stdout", "w", stdout); */
 
     return 0;
 }

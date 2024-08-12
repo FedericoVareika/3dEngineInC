@@ -4,16 +4,19 @@
 #define MESH_SIZE
 #define PI 3.14159265359f
 
+#include <arm_neon.h>
+/* extern __m128 _mm_add_ps( __m128 _A, __m128 _B ); */
+
 typedef struct vec2_t {
     float x;
     float y;
 } vec2_t;
 
-typedef struct vec3_t {
+typedef struct {
     float x;
     float y;
     float z;
-} vec3_t;
+} __attribute__((aligned (64))) vec3_t ;
 
 typedef struct vec4_t {
     float x;
@@ -45,6 +48,7 @@ vec4_t vec3_to_vec4(const vec3_t *v3);
 
 float lerp(float start, float end, float t);
 
+vec4_t vec4_norm(const vec4_t *v4);
 float vec4_dot(const vec4_t *A, const vec4_t *B);
 float distance_to_plane(const vec4_t *plane, const vec3_t *point);
 vec3_t intersection_plane_segment(const vec4_t *plane,

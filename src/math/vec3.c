@@ -28,13 +28,76 @@ vec2_t vec2_mul(const vec2_t *a, const float factor) {
     return (vec2_t){a->x * factor, a->y * factor};
 }
 
-vec3_t vec3_norm(const vec3_t *v) {
-    float magnitude = sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+vec4_t vec4_norm(const vec4_t *v) {
+#if defined(__ARM_NEON__)
+    float magnitude =
+        sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
+    return (vec4_t){
+        .x = v->x / magnitude,
+        .y = v->y / magnitude,
+        .z = v->z / magnitude,
+    };
+#else
+    float magnitude =
+        sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
     return (vec3_t){
         .x = v->x / magnitude,
         .y = v->y / magnitude,
         .z = v->z / magnitude,
     };
+    return
+#endif
+}
+
+#include <time.h>
+#define TEST_AMOUNT 100000
+
+#define CHECK_TIME(x)                                                          \
+    {                                                                          \
+        struct timespec start, end;                                            \
+        clock_gettime(CLOCK_REALTIME, &start);                                 \
+        x;                                                                     \
+        clock_gettime(CLOCK_REALTIME, &end);                                   \
+        double f = ((double)end.tv_sec * 1e9 + end.tv_nsec) -                  \
+                   ((double)start.tv_sec * 1e9 + start.tv_nsec);               \
+        printf("time %f ns\n", f);                                             \
+    }
+
+vec3_t vec3_norm_slow(const vec3_t *v) {
+    float magnitude;
+    vec3_t out;
+    magnitude = 1 / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    out = (vec3_t){
+        .x = v->x * magnitude,
+        .y = v->y * magnitude,
+        .z = v->z * magnitude,
+    };
+    return out;
+}
+
+vec3_t vec3_norm_fast(const vec3_t *v) {
+    float magnitude;
+    vec3_t out;
+
+    float32x4_t v_4 = vld1q_f32((float *)v);
+    magnitude = 0;
+    float32x4_t another = vmulq_f32(v_4, v_4);
+    magnitude = vaddvq_f32(another);
+    magnitude = 1 / sqrtf(magnitude);
+    v_4 = vmulq_n_f32(v_4, magnitude);
+    vst1q_f32((float *)&out, v_4);
+
+    return out;
+}
+
+vec3_t vec3_norm(const vec3_t *v) {
+    vec3_t out;
+#if defined(__ARM_NEON__)
+    out = vec3_norm_fast(v);
+#else
+    out = vec3_norm_slow(v);
+#endif
+    return out;
 }
 
 vec3_t vec3_cross(const vec3_t *a, const vec3_t *b) {
@@ -101,12 +164,9 @@ float distance_to_plane(const vec4_t *plane, const vec3_t *point) {
     return vec4_dot(plane, &point_4);
 }
 
-vec3_t intersection_plane_segment(const vec4_t *plane,
-                                  const vec3_t *A,
-                                  const vec3_t *A_uv,
-                                  const vec3_t *B,
-                                  const vec3_t *B_uv,
-                                  vec3_t *new_uv) {
+vec3_t intersection_plane_segment(const vec4_t *plane, const vec3_t *A,
+                                  const vec3_t *A_uv, const vec3_t *B,
+                                  const vec3_t *B_uv, vec3_t *new_uv) {
     // Plane = (N_x, N_y, N_z, d), N being the normal to the plane and d the
     // distance to (0, 0, 0)
     // This is the parametric equation of a plane or:

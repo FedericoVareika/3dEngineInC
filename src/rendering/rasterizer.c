@@ -26,7 +26,7 @@ static float32x4_t duplicate_q_f32(const float32x4_t in) {
     return result;
 }
 
-#ifdef __ARM_NEON
+#ifdef __ARM_NEON__
 static void fill_triangle_fast(uint32_t *frame_buffer, float *z_buffer,
                                vec3_t ABC[3], vec3_t ABC_uv[3],
                                const vec3_t *face_normal,
@@ -491,7 +491,7 @@ void draw_triangle(state_t *state, const vec3_t A, const vec3_t *A_uv,
     switch (state->flags.render_flag) {
     case FRAME_BUFFER:
     case Z_BUFFER:
-#ifdef __ARM_NEON
+#ifdef __ARM_NEON__
         fill_triangle_fast(
             state->buffers.frame_buffer, state->buffers.z_buffer,
             (vec3_t[3]){A, B, C},

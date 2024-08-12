@@ -75,6 +75,7 @@ vec3_t vec3_norm_slow(const vec3_t *v) {
     return out;
 }
 
+#ifdef __ARM_NEON__
 vec3_t vec3_norm_fast(const vec3_t *v) {
     float magnitude;
     vec3_t out;
@@ -89,10 +90,11 @@ vec3_t vec3_norm_fast(const vec3_t *v) {
 
     return out;
 }
+#endif
 
 vec3_t vec3_norm(const vec3_t *v) {
     vec3_t out;
-#if defined(__ARM_NEON__)
+#ifdef __ARM_NEON__
     out = vec3_norm_fast(v);
 #else
     out = vec3_norm_slow(v);

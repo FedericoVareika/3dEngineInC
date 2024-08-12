@@ -28,41 +28,6 @@ vec2_t vec2_mul(const vec2_t *a, const float factor) {
     return (vec2_t){a->x * factor, a->y * factor};
 }
 
-vec4_t vec4_norm(const vec4_t *v) {
-#if defined(__ARM_NEON__)
-    float magnitude =
-        sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-    return (vec4_t){
-        .x = v->x / magnitude,
-        .y = v->y / magnitude,
-        .z = v->z / magnitude,
-    };
-#else
-    float magnitude =
-        sqrtf(v->x * v->x + v->y * v->y + v->z * v->z + v->w * v->w);
-    return (vec3_t){
-        .x = v->x / magnitude,
-        .y = v->y / magnitude,
-        .z = v->z / magnitude,
-    };
-    return
-#endif
-}
-
-#include <time.h>
-#define TEST_AMOUNT 100000
-
-#define CHECK_TIME(x)                                                          \
-    {                                                                          \
-        struct timespec start, end;                                            \
-        clock_gettime(CLOCK_REALTIME, &start);                                 \
-        x;                                                                     \
-        clock_gettime(CLOCK_REALTIME, &end);                                   \
-        double f = ((double)end.tv_sec * 1e9 + end.tv_nsec) -                  \
-                   ((double)start.tv_sec * 1e9 + start.tv_nsec);               \
-        printf("time %f ns\n", f);                                             \
-    }
-
 vec3_t vec3_norm_slow(const vec3_t *v) {
     float magnitude;
     vec3_t out;

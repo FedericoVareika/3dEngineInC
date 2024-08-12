@@ -16,36 +16,58 @@
 
 #define CLIPPING_PLANES 6
 
-typedef struct tex_t {
+typedef struct {
+    char *name;
     uint8_t *data;
     unsigned int n;
     unsigned int w;
     unsigned int h;
 } tex_t;
 
-typedef struct mesh_t {
-    int vertex_count;
+typedef struct {
+    char *name;
+
+    float ambient[3];
+    float diffuse[3];
+    float specular[3];
+    float specular_exp;
+    float optical_density;
+    float dissolved;
+    float illum;
+
+    unsigned int ambient_tex_idx;
+    unsigned int diffuse_tex_idx;
+    unsigned int specular_tex_idx;
+    /* char *ambient_texname; */
+    /* char *diffuse_texname; */
+    /* char *specular_texname; */
+} mtl_t;
+
+typedef struct {
     int triangle_count;
+    unsigned int *v_indices;
+    unsigned int *t_indices;
+    unsigned int *n_indices;
+
+    mtl_t *mtl;
+} mesh_t;
+
+typedef struct {
+    matrix_t transform;
+    int mesh_count;
+
+    int vertex_count;
 
     vec3_t *vertices;
     vec3_t *tex_coords;
     vec3_t *normals;
 
-    unsigned int *v_indices;
-    unsigned int *t_indices;
-    unsigned int *n_indices;
-
-    tex_t tex;
-} mesh_t;
-
-typedef struct model_t {
-    matrix_t transform;
-    int mesh_count;
+    tex_t *textures;
 
     mesh_t *meshes;
 } model_t;
 
-typedef struct camera_t {
+typedef struct {
     vec3_t position;
     vec3_t direction;
     vec3_t up;
@@ -54,7 +76,7 @@ typedef struct camera_t {
     vec3_t rotation_speed;
 } camera_t;
 
-typedef struct engine_t {
+typedef struct {
     float far;
     float near;
     float fovy;
@@ -76,9 +98,10 @@ typedef struct engine_t {
     matrix_t projection_transform;
     matrix_t viewport_transform;
 
-    unsigned int mesh_count;
-    // model_t *models;
-    mesh_t **meshes;
+    /* unsigned int mesh_count; */
+    unsigned int model_count;
+    model_t **models;
+    /* mesh_t **meshes; */
 
     vec3_t directional_light; 
 

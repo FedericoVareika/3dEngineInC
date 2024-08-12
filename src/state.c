@@ -13,20 +13,16 @@ bool create_window(state_t *state) {
     state->running = true;
 
     // WINDOW
-    state->window = SDL_CreateWindow("Raster",
-                                     SDL_WINDOWPOS_CENTERED,
-                                     SDL_WINDOWPOS_CENTERED,
-                                     WINDOW_WIDTH,
-                                     WINDOW_HEIGHT,
-                                     0);
+    state->window = SDL_CreateWindow("Raster", SDL_WINDOWPOS_CENTERED,
+                                     SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH,
+                                     WINDOW_HEIGHT, 0);
     if (!state->window) {
         fprintf(stderr, "Error creating SDL window.\n");
         return false;
     }
 
     // RENDERER
-    state->renderer = SDL_CreateRenderer(state->window,
-                                         -1,
+    state->renderer = SDL_CreateRenderer(state->window, -1,
                                          SDL_RENDERER_ACCELERATED |
                                              SDL_RENDERER_PRESENTVSYNC |
                                              SDL_RENDERER_TARGETTEXTURE);
@@ -73,37 +69,26 @@ bool create_window(state_t *state) {
 
     // TEXTURES
     // frame buffer texture
-    state->textures.frame_buffer_texture =
-        SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_STREAMING,
-                          SCREEN_WIDTH,
-                          SCREEN_HEIGHT);
+    state->textures.frame_buffer_texture = SDL_CreateTexture(
+        state->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
+        SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // z buffer texture
-    state->textures.z_buffer_texture =
-        SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_STREAMING,
-                          SCREEN_WIDTH,
-                          SCREEN_HEIGHT);
+    state->textures.z_buffer_texture = SDL_CreateTexture(
+        state->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
+        SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // wireframe texture
-    state->textures.wireframe_texture =
-        SDL_CreateTexture(state->renderer,
-                          SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_STREAMING,
-                          SCREEN_WIDTH,
-                          SCREEN_HEIGHT);
+    state->textures.wireframe_texture = SDL_CreateTexture(
+        state->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
+        SCREEN_WIDTH, SCREEN_HEIGHT);
     // SDL_SetTextureBlendMode(state->textures.gui_texture,
     // SDL_BLENDMODE_BLEND);
 
     // gui texture
-    state->textures.gui_texture = SDL_CreateTexture(state->renderer,
-                                                    SDL_PIXELFORMAT_RGBA8888,
-                                                    SDL_TEXTUREACCESS_TARGET,
-                                                    SCREEN_WIDTH,
-                                                    SCREEN_HEIGHT);
+    state->textures.gui_texture = SDL_CreateTexture(
+        state->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+        SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetTextureBlendMode(state->textures.gui_texture, SDL_BLENDMODE_BLEND);
 
     // FLAGS
@@ -360,8 +345,7 @@ void render(state_t *state) {
         break;
     }
 
-    if (state->flags.render_gui)
-        render_gui(state);
+    if (state->flags.render_gui) render_gui(state);
 
     SDL_RenderPresent(state->renderer);
 
@@ -371,49 +355,30 @@ void render(state_t *state) {
 }
 
 void render_framebuffer(state_t *state) {
-    SDL_UpdateTexture(state->textures.frame_buffer_texture,
-                      NULL,
+    SDL_UpdateTexture(state->textures.frame_buffer_texture, NULL,
                       state->buffers.frame_buffer,
                       (int)(SCREEN_WIDTH * sizeof(uint32_t)));
-    SDL_RenderCopyEx(state->renderer,
-                     state->textures.frame_buffer_texture,
-                     NULL,
-                     NULL,
-                     0,
-                     NULL,
-                     SDL_FLIP_VERTICAL);
+    SDL_RenderCopyEx(state->renderer, state->textures.frame_buffer_texture,
+                     NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL);
 }
 
 void convert_z_buffer_to_greyscale(uint32_t *greyscale_buffer,
                                    float *z_buffer) {
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
-            /* float clamped_value = z_buffer[y * SCREEN_WIDTH + x]; */
-            /* clamped_value += 1; */
-            /* clamped_value /= 2; */
-            /* clamped_value *= clamped_value; */
-            /* clamped_value *= clamped_value; */
-            /* clamped_value *= clamped_value; */
-            /* if (clamped_value < -1) */
-            /*     clamped_value = 0; */
-            /* if (clamped_value > 1) { */
-            /*     clamped_value = 0xFF; */
-            /* } */
-
             uint32_t color = 0x000000FF;
             float clamped_value = z_buffer[y * SCREEN_WIDTH + x];
             if (clamped_value != INFINITY) {
-                
+
                 /* clamped_value = 1 / (clamped_value+1); */
                 clamped_value = 1 / clamped_value;
                 clamped_value = exp2(clamped_value);
 
-                color = (color << 8) + (uint32_t)(0xFF * clamped_value);
+                color = (uint32_t)(0xFF * clamped_value);
                 color = (color << 8) + (uint32_t)(0xFF * clamped_value);
                 color = (color << 8) + (uint32_t)(0xFF * clamped_value);
                 color = (color << 8) + 0xFF;
-                if (clamped_value > 1)
-                    color = 0xFF0000FF;
+                if (clamped_value > 1) color = 0xFF0000FF;
             }
 
             greyscale_buffer[(SCREEN_WIDTH * y) + x] = color;
@@ -425,16 +390,10 @@ void render_z_buffer(state_t *state) {
     uint32_t greyscale[SCREEN_WIDTH * SCREEN_HEIGHT];
     convert_z_buffer_to_greyscale(greyscale, state->buffers.z_buffer);
 
-    SDL_UpdateTexture(state->textures.z_buffer_texture,
-                      NULL,
-                      greyscale,
+    SDL_UpdateTexture(state->textures.z_buffer_texture, NULL, greyscale,
                       (int)(SCREEN_WIDTH * sizeof(uint32_t)));
-    SDL_RenderCopyEx(state->renderer,
-                     state->textures.z_buffer_texture,
-                     NULL,
-                     NULL,
-                     0,
-                     NULL,
+    SDL_RenderCopyEx(state->renderer, state->textures.z_buffer_texture, NULL,
+                     NULL, 0, NULL,
                      // 0);
                      SDL_FLIP_VERTICAL);
 }
@@ -463,45 +422,30 @@ void render_wireframe_buffer(state_t *state) {
     SDL_RenderClear(state->renderer);
     SDL_SetRenderTarget(state->renderer, 0);
 
-    SDL_UpdateTexture(state->textures.wireframe_texture,
-                      NULL,
-                      color_buffer,
+    SDL_UpdateTexture(state->textures.wireframe_texture, NULL, color_buffer,
                       (int)(SCREEN_WIDTH * sizeof(uint32_t)));
-    SDL_RenderCopyEx(state->renderer,
-                     state->textures.wireframe_texture,
-                     NULL,
-                     NULL,
-                     0,
-                     NULL,
+    SDL_RenderCopyEx(state->renderer, state->textures.wireframe_texture, NULL,
+                     NULL, 0, NULL,
                      // 0);
                      SDL_FLIP_VERTICAL);
 }
 
-bool pixel_priority(const float *z_buffer,
-                    const int x,
-                    const int y,
+bool pixel_priority(const float *z_buffer, const int x, const int y,
                     const float z) {
-    /* return z_buffer[(SCREEN_WIDTH * y) + x] >  z; */
     return z_buffer[(SCREEN_WIDTH * y) + x] > z;
 }
 
-void draw_frame_buffer_pixel(uint32_t *frame_buffer,
-                             const int x,
-                             const int y,
+void draw_frame_buffer_pixel(uint32_t *frame_buffer, const int x, const int y,
                              const uint32_t color) {
     frame_buffer[(SCREEN_WIDTH * y) + x] = color;
 }
 
-void draw_z_buffer_pixel(float *z_buffer,
-                         const int x,
-                         const int y,
+void draw_z_buffer_pixel(float *z_buffer, const int x, const int y,
                          const float z) {
     z_buffer[(SCREEN_WIDTH * y) + x] = z;
 }
 
-void draw_wireframe_buffer_pixel(bool *wireframe_buffer,
-                                 const int x,
-                                 const int y,
-                                 const bool b) {
+void draw_wireframe_buffer_pixel(bool *wireframe_buffer, const int x,
+                                 const int y, const bool b) {
     wireframe_buffer[(SCREEN_WIDTH * y) + x] = b;
 }

@@ -10,23 +10,23 @@ FILES += ./src/rendering/*.c
 FILES += ./src/loading/*.c 
 FILES += ./src/data_structures/*.c
 
+ONOVECTORIZATION = -mno-sse -mno-avx
 CFLAGS = -Wall -std=c11 $(LDFLAGS) $(INC)
-# CFLAGS += -O2
-CFLAGS += -O0
+OFLAGS = -fno-inline -ffp-contract=on $(ONOVECTORIZATION)
+OFLAGS += -O1
 
 build: 
-	gcc $(CFLAGS) -o $(PROGRAM_NAME) $(FILES) $(LDLIBS)
+	gcc $(CFLAGS) $(OFLAGS) -o $(PROGRAM_NAME) $(FILES) $(LDLIBS)
+
+# buildO3: 
+# 	gcc $(CFLAGS) -o $(PROGRAM_NAME) $(FILES) $(LDLIBS)
 
 run:
 	./$(PROGRAM_NAME)
-
-# run_map:
-# 	./$(PROGRAM_NAME) ArtisansHub
-	# ./$(PROGRAM_NAME) ArtisansHub Low
 
 clean: 
 	rm $(PROGRAM_NAME)
 
 debug: 
-	gcc $(CFLAGS) -g $(FILES) $(LDLIBS) 
+	gcc $(CFLAGS) -O1 -g $(FILES) $(LDLIBS) 
 	lldb a.out
